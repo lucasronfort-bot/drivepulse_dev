@@ -1,0 +1,112 @@
+{
+  "title": "On & On",
+  "artist": "Cartoon & Jéja",
+  "license": "Test local uniquement — droits réservés",
+  "source_url": "",
+  "bpm": 174.0,
+  "bar_duration": 1.3793103448275863,
+  "playback_mode": "continuous",
+  "track_duration": 207.25551,
+  "loop_duration": 207.25551,
+  "crossfade_duration": 0.75,
+  "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo — aucune recompression supplémentaire",
+  "source_quality_note": "Stems probablement issus d’une séparation automatique ; résidus possibles entre les pistes.",
+  "buses": [
+    "rhythm",
+    "tops",
+    "bass",
+    "lead"
+  ],
+  "bus_behaviors": {
+    "rhythm": "pulse_speed",
+    "tops": "spark_always",
+    "bass": "bounce_accel_turn",
+    "lead": "voice_always"
+  },
+  "characters": [
+    {
+      "id": "rhythm",
+      "emoji": "🥁",
+      "name": "PULSE",
+      "role": "Drums",
+      "description": "Progression continue avec la vitesse",
+      "color": "#ff5d67",
+      "timing": "beat"
+    },
+    {
+      "id": "tops",
+      "emoji": "✨",
+      "name": "SPARK",
+      "role": "Other / synthés",
+      "description": "Toujours actif par défaut",
+      "color": "#ffc13d",
+      "timing": "immediate"
+    },
+    {
+      "id": "bass",
+      "emoji": "🔊",
+      "name": "BOUNCE",
+      "role": "Bass",
+      "description": "Activé par l’accélération et les virages",
+      "color": "#25c5ff",
+      "timing": "beat"
+    },
+    {
+      "id": "lead",
+      "emoji": "🎙️",
+      "name": "VOICE",
+      "role": "Vocals",
+      "description": "Toujours active par défaut",
+      "color": "#b965ff",
+      "timing": "immediate"
+    }
+  ],
+  "bus_output_gain": {
+    "rhythm": 0.94,
+    "tops": 1.08,
+    "bass": 0.98,
+    "lead": 1.06
+  },
+  "continuous": {
+    "files": {
+      "rhythm": "audio/on-and-on-test/full/rhythm.mp3",
+      "tops": "audio/on-and-on-test/full/tops.mp3",
+      "bass": "audio/on-and-on-test/full/bass.mp3",
+      "lead": "audio/on-and-on-test/full/lead.mp3"
+    }
+  },
+  "scenes": {
+    "intro": {
+      "label": "Intro"
+    },
+    "groove": {
+      "label": "Groove"
+    },
+    "drive": {
+      "label": "Montée"
+    },
+    "breakdown": {
+      "label": "Respiration"
+    },
+    "chorus": {
+      "label": "Refrain"
+    },
+    "finale": {
+      "label": "Finale"
+    }
+  },
+  "reaction_rules": {
+    "default_active": [
+      "VOICE",
+      "SPARK"
+    ],
+    "PULSE": [
+      "speed"
+    ],
+    "BOUNCE": [
+      "acceleration",
+      "turn"
+    ],
+    "KEYS": []
+  }
+}
