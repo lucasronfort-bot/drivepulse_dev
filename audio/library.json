@@ -1,0 +1,146 @@
+{
+  "version": 19,
+  "default_track": "dubidubidu-test",
+  "tracks": [
+    {
+      "id": "dubidubidu-test",
+      "title": "Dubidubidu",
+      "edition": "Continuous Drive Test",
+      "artist": "Christell",
+      "license": "Test local uniquement",
+      "manifest": "audio/dubidubidu-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ff70c8"
+    },
+    {
+      "id": "butterfly-test",
+      "title": "Butterfly",
+      "edition": "Private Drive Test",
+      "artist": "Marnik & Hard Lights",
+      "license": "Test local uniquement",
+      "manifest": "audio/butterfly-test/manifest.json",
+      "profile": "drive",
+      "accent": "#45d6ff"
+    },
+    {
+      "id": "blame-it-on-me-test",
+      "title": "Blame It On Me",
+      "edition": "Private Drive Test",
+      "artist": "CADMIUM & Shiah Maisel",
+      "license": "Test local uniquement",
+      "manifest": "audio/blame-it-on-me-test/manifest.json",
+      "profile": "drive",
+      "accent": "#7d75ff"
+    },
+    {
+      "id": "modern-talking-feat-test",
+      "title": "Modern Talking feat. Eric Singleton",
+      "edition": "Private Drive Test",
+      "artist": "Modern Talking feat. Eric Singleton",
+      "license": "Test local uniquement",
+      "manifest": "audio/modern-talking-feat-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ef62d8"
+    },
+    {
+      "id": "on-and-on-test",
+      "title": "On & On",
+      "edition": "Private Drive Test",
+      "artist": "Cartoon & Jéja",
+      "license": "Test local uniquement",
+      "manifest": "audio/on-and-on-test/manifest.json",
+      "profile": "drive",
+      "accent": "#46e0a0"
+    },
+    {
+      "id": "shania-impress-remix-test",
+      "title": "That Don't Impress Me Much",
+      "edition": "Xelpy Remix — Private Drive Test",
+      "artist": "Shania Twain / Xelpy",
+      "license": "Test local uniquement",
+      "manifest": "audio/shania-impress-remix-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ff9b50"
+    },
+    {
+      "id": "ziak-i-will-survive-test",
+      "title": "I Will Survive (Disco Remix)",
+      "edition": "Private Drive Test",
+      "artist": "Ziak",
+      "license": "Test local uniquement",
+      "manifest": "audio/ziak-i-will-survive-test/manifest.json",
+      "profile": "drive",
+      "accent": "#f05072"
+    },
+    {
+      "id": "whispering-still-little-rose-test",
+      "title": "Whispering Still",
+      "edition": "Little Rose Remix — Private Drive Test",
+      "artist": "SRTW ft. Charity Children",
+      "license": "Test local uniquement",
+      "manifest": "audio/whispering-still-little-rose-test/manifest.json",
+      "profile": "drive",
+      "accent": "#de6cff"
+    },
+    {
+      "id": "first-thing-test",
+      "title": "First Thing",
+      "edition": "Private Drive Test",
+      "artist": "Artiste à préciser",
+      "license": "Test local uniquement",
+      "manifest": "audio/first-thing-test/manifest.json",
+      "profile": "drive",
+      "accent": "#8fd75a"
+    },
+    {
+      "id": "unsteady-justin-caruso-test",
+      "title": "Unsteady",
+      "edition": "Justin Caruso Remix — Private Drive Test",
+      "artist": "X Ambassadors / Justin Caruso",
+      "license": "Test local uniquement",
+      "manifest": "audio/unsteady-justin-caruso-test/manifest.json",
+      "profile": "drive",
+      "accent": "#4ca8ff"
+    },
+    {
+      "id": "danza-kuduro-instrumental-remix-test",
+      "title": "Danza Kuduro Instrumental Remix",
+      "edition": "Private Drive Test",
+      "artist": "Don Omar ft. Lucenzo",
+      "license": "Test local uniquement",
+      "manifest": "audio/danza-kuduro-instrumental-remix-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ff8b35"
+    },
+    {
+      "id": "minuit-jacuzi-data-remix-test",
+      "title": "Minuit Jacuzi",
+      "edition": "datA Remix — Private Drive Test",
+      "artist": "Tepr",
+      "license": "Test local uniquement",
+      "manifest": "audio/minuit-jacuzi-data-remix-test/manifest.json",
+      "profile": "drive",
+      "accent": "#22d3b6"
+    },
+    {
+      "id": "jerk-it-out-lets-go-miguelx2-test",
+      "title": "Jerk It Out",
+      "edition": "Let’s Go! Remix — Private Drive Test",
+      "artist": "Miguelx2",
+      "license": "Test local uniquement",
+      "manifest": "audio/jerk-it-out-lets-go-miguelx2-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ffcf40"
+    },
+    {
+      "id": "i-will-wait-for-you-test",
+      "title": "I Will Wait For You",
+      "edition": "Private Drive Test",
+      "artist": "Tomas Skyldeberg",
+      "license": "Test local uniquement",
+      "manifest": "audio/i-will-wait-for-you-test/manifest.json",
+      "profile": "drive",
+      "accent": "#73d8ff"
+    }
+  ]
+}
