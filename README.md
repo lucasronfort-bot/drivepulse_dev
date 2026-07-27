@@ -1,23 +1,25 @@
-# DrivePulse Web V9.0 — Dubidubidu Continuous Test
+# DrivePulse V9.1 — Simulateur ordinateur
 
-Version de test locale. Le morceau n'est pas sous licence Creative Commons et ne doit pas être distribué publiquement.
+Cette version conserve la lecture continue des cinq stems de Dubidubidu et ajoute un banc d’essai manuel pour ordinateur.
 
-## Architecture audio
+## Commandes
 
-- 5 stems complets synchronisés depuis 00:00 ;
-- durée : 226.220 secondes, soit environ 3 min 46 s ;
-- aucune découpe en boucles de huit mesures ;
-- aucune recompression supplémentaire : DrivePulse lit directement les MP3 sources ;
-- redémarrage groupé en fin de morceau ;
-- fondu croisé de 0.75 seconde entre la fin et le début ;
-- les changements de conduite modifient les volumes, sans déplacer la tête de lecture.
+- Vitesse : 0 à 180 km/h.
+- Accélération : 0 à 100 %.
+- Freinage : 0 à 100 %.
+- Virage : gauche à droite, avec intensité signée.
+- Option « Lier les pédales à la vitesse » : l’accélérateur augmente réellement la vitesse simulée et le frein la réduit.
 
-## Règles
+## Clavier
 
-- KEYS : toujours actif ;
-- VOICE : toujours active ;
-- PULSE : progression avec la vitesse ;
-- SPARK : accélération et virages ;
-- BOUNCE : vitesse, énergie et freinage.
+- W ou flèche haute : accélérer.
+- S, flèche basse ou espace : freiner.
+- A ou flèche gauche : tourner à gauche.
+- D ou flèche droite : tourner à droite.
+- R : relâcher l’accélération, le freinage et le virage.
 
-Les états Intro, Groove, Montée, Respiration, Refrain et Finale restent des indicateurs de conduite. Ils ne remplacent plus le fragment musical joué.
+Le curseur de vitesse peut toujours être déplacé directement. Les préréglages permettent de rejoindre rapidement 0, 30, 50, 80 ou 130 km/h.
+
+## CSV
+
+L’export ajoute `input_mode`, `turn_signed` et `pedals_linked` afin de distinguer les essais ordinateur des trajets réels.

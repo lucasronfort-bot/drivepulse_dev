@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V9.0 — Dubidubidu Continuous Test",
+  "name": "DrivePulse V9.1 — Desktop Simulator",
   "short_name": "DrivePulse",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "Test local avec lecture continue des stems complets et réactions adaptatives."
+  "description": "Prototype DrivePulse avec commandes ordinateur pour la vitesse, l’accélération, le freinage et les virages."
 }

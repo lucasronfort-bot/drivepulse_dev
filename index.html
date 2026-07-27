@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#060a12">
-<title>DrivePulse V9.0</title>
+<title>DrivePulse V9.1</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=9.0">
+<link rel="stylesheet" href="style.css?v=9.1">
 </head>
 <body>
 <main class="app-shell">
@@ -63,9 +63,82 @@
   <button id="qualityBtn" disabled>Mix fixe A/B</button>
   <button id="recordBtn" disabled>Enregistrer capteurs</button>
   <button id="downloadLogBtn" disabled>Télécharger CSV</button>
+  <button id="desktopSimBtn" class="desktop-sim-toggle active" type="button">Simulateur PC actif</button>
   <div class="measure-pill">
-    <span>Mesure</span>
-    <strong id="barLabel">1 / 8</strong>
+    <span>Temps</span>
+    <strong id="barLabel">0:00 / 0:00</strong>
+  </div>
+</section>
+
+
+<section id="desktopSimulatorPanel" class="glass-panel desktop-simulator-panel">
+  <div class="panel-heading compact simulator-heading">
+    <div>
+      <p class="section-kicker">Banc d’essai ordinateur</p>
+      <h2>Commandes de conduite</h2>
+      <p>Contrôle les signaux envoyés au moteur musical sans GPS ni capteurs du téléphone.</p>
+    </div>
+    <span id="desktopSimState" class="desktop-sim-state active">Mode PC actif</span>
+  </div>
+
+  <div class="simulator-grid">
+    <div class="sim-control speed-control">
+      <div class="sim-control-title">
+        <label for="simSpeed">Vitesse</label>
+        <output id="simSpeedValue">0 km/h</output>
+      </div>
+      <input id="simSpeed" type="range" min="0" max="180" step="1" value="0">
+      <div class="sim-scale"><span>0</span><span>50</span><span>80</span><span>130</span><span>180</span></div>
+    </div>
+
+    <div class="sim-control accel-control">
+      <div class="sim-control-title">
+        <label for="simAccel">Accélération</label>
+        <output id="simAccelValue">0%</output>
+      </div>
+      <input id="simAccel" type="range" min="0" max="1" step="0.01" value="0">
+      <small>Active notamment SPARK et augmente l’énergie.</small>
+    </div>
+
+    <div class="sim-control brake-control">
+      <div class="sim-control-title">
+        <label for="simBrake">Freinage</label>
+        <output id="simBrakeValue">0%</output>
+      </div>
+      <input id="simBrake" type="range" min="0" max="1" step="0.01" value="0">
+      <small>Renforce BOUNCE selon la règle du morceau.</small>
+    </div>
+
+    <div class="sim-control turn-control">
+      <div class="sim-control-title">
+        <label for="simTurn">Virage</label>
+        <output id="simTurnValue">Centre</output>
+      </div>
+      <input id="simTurn" type="range" min="-1" max="1" step="0.01" value="0">
+      <div class="turn-scale"><span>Gauche</span><span>Centre</span><span>Droite</span></div>
+      <small>La direction est conservée ; l’intensité pilote SPARK.</small>
+    </div>
+  </div>
+
+  <div class="simulator-footer">
+    <label class="sim-link-option">
+      <input id="simLinkPedals" type="checkbox" checked>
+      <span><strong>Lier les pédales à la vitesse</strong><small>L’accélérateur augmente la vitesse et le frein la réduit.</small></span>
+    </label>
+
+    <div class="sim-preset-row" aria-label="Préréglages de conduite">
+      <button type="button" data-sim-preset="stop">Arrêt</button>
+      <button type="button" data-sim-preset="city30">30 km/h</button>
+      <button type="button" data-sim-preset="city50">50 km/h</button>
+      <button type="button" data-sim-preset="country80">80 km/h</button>
+      <button type="button" data-sim-preset="highway130">130 km/h</button>
+      <button id="simResetSignals" type="button">Relâcher les commandes</button>
+    </div>
+  </div>
+
+  <div class="simulator-live-row">
+    <strong id="simLiveState">0 km/h · conduite stable</strong>
+    <span>Clavier : W/↑ accélérer · S/↓/Espace freiner · A/← gauche · D/→ droite · R relâcher</span>
   </div>
 </section>
 
@@ -322,7 +395,7 @@
 </section>
 
 <footer class="safety-note">
-  <strong>Sécurité :</strong> manipulations à l’arrêt ou par un passager uniquement. Le téléphone doit rester rigidement fixé.<br>
+  <strong>Mode ordinateur :</strong> ce banc d’essai remplace temporairement le GPS et les capteurs par des commandes manuelles.<br>
   <span id="musicAttribution">Test privé de « Dubidubidu » par Christell — ne pas publier ni redistribuer.</span>
 </footer>
 
@@ -337,6 +410,6 @@
   </div>
 </div>
 
-<script src="app.js?v=9.0"></script>
+<script src="app.js?v=9.1"></script>
 </body>
 </html>

@@ -20,7 +20,11 @@ const ui={
  trackSelect:$("trackSelect"),previousTrack:$("previousTrackBtn"),nextTrack:$("nextTrackBtn"),
  autoTrack:$("autoTrackToggle"),autoTrackDuration:$("autoTrackDuration"),trackCountdown:$("trackCountdown"),
  trackTitle:$("trackTitle"),trackEdition:$("trackEdition"),trackArtist:$("trackArtist"),
- trackSwitchState:$("trackSwitchState"),musicAttribution:$("musicAttribution")
+ trackSwitchState:$("trackSwitchState"),musicAttribution:$("musicAttribution"),
+ desktopSimBtn:$("desktopSimBtn"),desktopSimPanel:$("desktopSimulatorPanel"),desktopSimState:$("desktopSimState"),
+ simSpeed:$("simSpeed"),simSpeedValue:$("simSpeedValue"),simAccel:$("simAccel"),simAccelValue:$("simAccelValue"),
+ simBrake:$("simBrake"),simBrakeValue:$("simBrakeValue"),simTurn:$("simTurn"),simTurnValue:$("simTurnValue"),
+ simLinkPedals:$("simLinkPedals"),simResetSignals:$("simResetSignals"),simLiveState:$("simLiveState")
 };
 
 const LIBRARY_URL="audio/library.json";
@@ -42,6 +46,12 @@ const smoothstep=(edge0,edge1,value)=>{
 };
 const mod=(value,divisor)=>((value%divisor)+divisor)%divisor;
 const finite=value=>Number.isFinite(Number(value))?Number(value):0;
+const formatClock=seconds=>{
+ const total=Math.max(0,Math.floor(finite(seconds)));
+ const minutes=Math.floor(total/60);
+ const secs=total%60;
+ return `${minutes}:${String(secs).padStart(2,"0")}`;
+};
 
 const vec=(x=0,y=0,z=0)=>({x,y,z});
 const add=(a,b)=>vec(a.x+b.x,a.y+b.y,a.z+b.z);
@@ -109,6 +119,10 @@ let updateTimer=null;
 let watchId=null;
 let demoTimer=null;
 let journeyTimer=null;
+let desktopSimActive=localStorage.getItem("drivepulse-desktop-sim")!=="0";
+let desktopSimLastUpdate=performance.now();
+let desktopState={speed:0,accel:0,brake:0,turn:0};
+const desktopKeys={accel:false,brake:false,left:false,right:false};
 let generation=0;
 let fixedMixMode=false;
 
@@ -224,7 +238,7 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V9.0 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V9.1 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
  if(library.tracks.length){
@@ -847,6 +861,119 @@ function applyBusMix(force=false){
  masterGain.gain.setTargetAtTime(fixedMixMode?.90:brake>.58?.72:.92,now,.055);
 }
 
+
+function formatTurnSignal(value){
+ const magnitude=Math.round(Math.abs(value)*100);
+ if(magnitude<2)return "Centre";
+ return `${value<0?"Gauche":"Droite"} ${magnitude}%`;
+}
+
+function readDesktopControls(){
+ desktopState.speed=clamp(finite(ui.simSpeed.value),0,180);
+ desktopState.accel=clamp(finite(ui.simAccel.value));
+ desktopState.brake=clamp(finite(ui.simBrake.value));
+ desktopState.turn=clamp(finite(ui.simTurn.value),-1,1);
+}
+
+function updateDesktopControlLabels(){
+ ui.simSpeedValue.value=`${Math.round(desktopState.speed)} km/h`;
+ ui.simAccelValue.value=`${Math.round(desktopState.accel*100)}%`;
+ ui.simBrakeValue.value=`${Math.round(desktopState.brake*100)}%`;
+ ui.simTurnValue.value=formatTurnSignal(desktopState.turn);
+ const actions=[];
+ if(desktopState.accel>.05)actions.push(`accélération ${Math.round(desktopState.accel*100)}%`);
+ if(desktopState.brake>.05)actions.push(`freinage ${Math.round(desktopState.brake*100)}%`);
+ if(Math.abs(desktopState.turn)>.05)actions.push(formatTurnSignal(desktopState.turn).toLowerCase());
+ ui.simLiveState.textContent=`${Math.round(desktopState.speed)} km/h · ${actions.length?actions.join(" · "):"conduite stable"}`;
+}
+
+function updateDesktopSimulatorUi(){
+ ui.desktopSimBtn.classList.toggle("active",desktopSimActive);
+ ui.desktopSimBtn.textContent=desktopSimActive?"Simulateur PC actif":"Activer simulateur PC";
+ ui.desktopSimState.classList.toggle("active",desktopSimActive);
+ ui.desktopSimState.textContent=desktopSimActive?"Mode PC actif":"Capteurs réels";
+ ui.desktopSimPanel.classList.toggle("inactive",!desktopSimActive);
+ ui.calibrate.disabled=desktopSimActive||!running;
+ updateDesktopControlLabels();
+}
+
+async function setDesktopSimulation(active,restoreSensors=true){
+ desktopSimActive=Boolean(active);
+ localStorage.setItem("drivepulse-desktop-sim",desktopSimActive?"1":"0");
+ desktopSimLastUpdate=performance.now();
+ if(desktopSimActive){
+  if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";}
+  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;ui.journey.textContent="Scénario trajet complet";}
+  if(watchId!=null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);
+  watchId=null;
+  window.removeEventListener("devicemotion",handleMotion);
+  motionFrequency=20;
+  if(running)setStatus("Simulateur PC actif : utilise les curseurs ou le clavier.");
+ }else if(running&&restoreSensors){
+  const motionGranted=await requestMotionPermission();
+  if(!desktopSimActive){
+   if(motionGranted)window.addEventListener("devicemotion",handleMotion,{passive:true});
+   startGps();
+  }
+  setStatus(motionGranted?"Capteurs réels actifs.":"GPS actif ; capteurs Motion indisponibles.");
+ }
+ updateDesktopSimulatorUi();
+}
+
+function releaseDesktopSignals(){
+ desktopState.accel=0;desktopState.brake=0;desktopState.turn=0;
+ ui.simAccel.value="0";ui.simBrake.value="0";ui.simTurn.value="0";
+ desktopKeys.accel=desktopKeys.brake=desktopKeys.left=desktopKeys.right=false;
+ updateDesktopControlLabels();
+}
+
+function applyDesktopPreset(name){
+ const presets={stop:[0,"city"],city30:[30,"city"],city50:[50,"city"],country80:[80,"country"],highway130:[130,"highway"]};
+ const preset=presets[name];
+ if(!preset)return;
+ desktopState.speed=preset[0];
+ ui.simSpeed.value=String(desktopState.speed);
+ releaseDesktopSignals();
+ applyRoadMode(preset[1]);
+ updateDesktopControlLabels();
+}
+
+function updateDesktopSimulation(){
+ if(!desktopSimActive)return;
+ const now=performance.now();
+ const dt=Math.max(.01,Math.min(.20,(now-desktopSimLastUpdate)/1000));
+ desktopSimLastUpdate=now;
+ readDesktopControls();
+ const acceleration=Math.max(desktopState.accel,desktopKeys.accel?1:0);
+ const braking=Math.max(desktopState.brake,desktopKeys.brake?1:0);
+ let steering=desktopState.turn;
+ if(desktopKeys.left&&!desktopKeys.right)steering=-1;
+ else if(desktopKeys.right&&!desktopKeys.left)steering=1;
+
+ if(ui.simLinkPedals.checked){
+  const propulsion=acceleration*26;
+  const deceleration=braking*42;
+  const rolling=acceleration<.02&&braking<.02&&desktopState.speed>0?.32:0;
+  desktopState.speed=clamp(desktopState.speed+(propulsion-deceleration-rolling)*dt,0,180);
+  ui.simSpeed.value=String(Math.round(desktopState.speed));
+ }
+ speedKmh=desktopState.speed;
+ gpsSpeedMs=speedKmh/3.6;
+ gpsAcceleration=acceleration*2.25-braking*3.4;
+ gpsHeadingRate=Math.abs(steering)*38;
+ imuLongitudinal=gpsAcceleration;
+ imuLateral=steering*2.5;
+ verticalYawRate=Math.abs(steering)*48;
+ rawMotion=vec(steering*1.2,0,gpsAcceleration);
+ linearMotion=rawMotion;
+ motionFrequency=20;
+ smoothed.accel=lowPass(smoothed.accel,acceleration,.42);
+ smoothed.brake=lowPass(smoothed.brake,braking,.42);
+ smoothed.turn=lowPass(smoothed.turn,Math.abs(steering),.40);
+ desktopState.turn=finite(ui.simTurn.value);
+ updateDesktopControlLabels();
+}
+
 function updateDrivingMemory(){
  const now=performance.now();
  const dt=Math.min(1,(now-lastMemoryUpdate)/1000);
@@ -910,7 +1037,11 @@ function updateCalibrationBadge(){
 function updateUi(){
  const profile=ROAD_PROFILES[roadMode];
  const now=audioCtx&&running?audioCtx.currentTime:currentPhaseStart;
- const barPosition=running?Math.floor(mod(now-currentPhaseStart,LOOP_DURATION)/BAR_DURATION)+1:1;
+ const playbackElapsed=running?Math.max(0,now-currentPhaseStart):0;
+ const playbackPosition=isContinuousTrack()
+  ?mod(playbackElapsed,Math.max(1,TRACK_DURATION))
+  :mod(playbackElapsed,Math.max(1,LOOP_DURATION));
+ const playbackTotal=isContinuousTrack()?Math.max(1,TRACK_DURATION):Math.max(1,LOOP_DURATION);
  const levels=desiredBusLevels();
  ui.speed.textContent=Math.round(speedKmh);
  ui.speedMusic.textContent=`${Math.round(speedIntensity*100)}%`;
@@ -919,7 +1050,7 @@ function updateUi(){
  ui.energyTrack.style.width=`${Math.round(energy*100)}%`;
  ui.section.textContent=SCENE_LABELS[currentScene];
  ui.mode.textContent=modeLabel();
- ui.bar.textContent=`${barPosition} / 8`;
+ ui.bar.textContent=`${formatClock(playbackPosition)} / ${formatClock(playbackTotal)}`;
  ui.road.textContent=profile.label;
  ui.roadHelp.textContent=profile.help;
 
@@ -952,11 +1083,11 @@ function maybeLogSensors(){
  if(now-lastLogAt<200)return;
  lastLogAt=now;
  sensorLog.push({
-  iso:new Date().toISOString(),elapsed_ms:Math.round(now),track_id:currentTrackId,road_mode:roadMode,scene:currentScene,target_scene:targetScene,
+  iso:new Date().toISOString(),elapsed_ms:Math.round(now),track_id:currentTrackId,input_mode:desktopSimActive?"desktop":"sensors",road_mode:roadMode,scene:currentScene,target_scene:targetScene,
   speed_kmh:speedKmh.toFixed(2),gps_accel_ms2:gpsAcceleration.toFixed(3),gps_heading_rate_dps:gpsHeadingRate.toFixed(3),
   motion_x:rawMotion.x.toFixed(4),motion_y:rawMotion.y.toFixed(4),motion_z:rawMotion.z.toFixed(4),
   imu_longitudinal:imuLongitudinal.toFixed(4),imu_lateral:imuLateral.toFixed(4),yaw_rate_dps:verticalYawRate.toFixed(3),
-  accel_signal:smoothed.accel.toFixed(4),brake_signal:smoothed.brake.toFixed(4),turn_signal:smoothed.turn.toFixed(4),
+  accel_signal:smoothed.accel.toFixed(4),brake_signal:smoothed.brake.toFixed(4),turn_signal:smoothed.turn.toFixed(4),turn_signed:(desktopSimActive?desktopState.turn:Math.sign(imuLateral)*smoothed.turn).toFixed(4),pedals_linked:desktopSimActive&&ui.simLinkPedals.checked?1:0,
   energy:energy.toFixed(4),speed_ratio:speedRatio.toFixed(4),
   rhythm_level:(busRequestedLevels.get("rhythm")||0).toFixed(4),tops_level:(busRequestedLevels.get("tops")||0).toFixed(4),
   bass_level:(busRequestedLevels.get("bass")||0).toFixed(4),harmony_level:(busRequestedLevels.get("harmony")||0).toFixed(4),
@@ -969,6 +1100,7 @@ function maybeLogSensors(){
 
 function updateEngine(){
  if(!running)return;
+ updateDesktopSimulation();
  updateDrivingMemory();
  maybeUpdateTarget();
  maybeAutoSwitchTrack();
@@ -1012,7 +1144,7 @@ function calculateLinearAcceleration(event){
 }
 
 function handleMotion(event){
- if(!running||demoTimer||journeyTimer)return;
+ if(!running||desktopSimActive||demoTimer||journeyTimer)return;
  motionEventCount++;
  const now=performance.now();
  if(now-motionFrequencyWindow>=1000){
@@ -1131,7 +1263,7 @@ function cancelCalibration(message){
 function startGps(){
  if(!navigator.geolocation)return;
  watchId=navigator.geolocation.watchPosition(position=>{
-  if(demoTimer||journeyTimer)return;
+  if(desktopSimActive||demoTimer||journeyTimer)return;
   const {coords,timestamp}=position;
   const speed=coords.speed!=null&&Number.isFinite(coords.speed)?Math.max(0,coords.speed):gpsSpeedMs;
   if(lastGps.timestamp&&lastGps.speed!=null){
@@ -1153,6 +1285,7 @@ function startGps(){
 }
 
 function startDemo(){
+ if(desktopSimActive)setDesktopSimulation(false,false);
  if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";setStatus("Simulation arrêtée.");return;}
  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;}
  let phase=0;ui.demo.textContent="Arrêter la simulation";setStatus("Simulation low latency active.");
@@ -1163,6 +1296,7 @@ function startDemo(){
 }
 
 function startJourney(){
+ if(desktopSimActive)setDesktopSimulation(false,false);
  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;ui.journey.textContent="Scénario trajet complet";setStatus("Scénario arrêté.");return;}
  if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";}
  let elapsed=0;ui.journey.textContent="Arrêter le scénario";setStatus("Scénario : ville → campagne → autoroute → freinage.");
@@ -1205,7 +1339,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v9-0-continuous-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v9-1-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1219,7 +1353,7 @@ async function start(){
   generation++;setStatus("Chargement des cinq stems complets synchronisés…");
   createAudioGraph();
   const resumePromise=audioCtx.resume();
-  const permissionPromise=requestMotionPermission();
+  const permissionPromise=desktopSimActive?Promise.resolve(false):requestMotionPermission();
   await loadLibrary();
   await activateTrackMetadata(currentTrackId);
   await resumePromise;
@@ -1238,11 +1372,11 @@ async function start(){
   startGps();
   prefetchAllAudio();
 
-  ui.start.disabled=true;ui.calibrate.disabled=!motionGranted;ui.stop.disabled=false;ui.demo.disabled=false;ui.journey.disabled=false;
+  ui.start.disabled=true;ui.calibrate.disabled=desktopSimActive||!motionGranted;ui.stop.disabled=false;ui.demo.disabled=false;ui.journey.disabled=false;
   ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(motionGranted?(sensorCalibration.calibrated?"V9.0 active : lecture continue et calibration 3D prêtes.":"V9.0 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles.");
+  setStatus(desktopSimActive?"V9.1 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.1 active : lecture continue et calibration 3D prêtes.":"V9.1 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.0.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.1.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1279,12 +1413,12 @@ function openHelp(key){const item=HELP_CONTENT[key];if(!item)return;ui.helpTitle
 function closeHelp(){ui.helpModal.hidden=true;}
 function updateSettingValues(){ui.responsivenessValue.value=Number(ui.responsiveness.value).toFixed(1);ui.accelSensitivityValue.value=Number(ui.accelSensitivity.value).toFixed(2);ui.turnSensitivityValue.value=Number(ui.turnSensitivity.value).toFixed(2);}
 
-renderAgents();loadSavedCalibration();applyRoadMode(roadMode);updateSectionTimeline();updateSettingValues();updateCalibrationBadge();
+renderAgents();loadSavedCalibration();applyRoadMode(roadMode);updateSectionTimeline();updateSettingValues();updateCalibrationBadge();readDesktopControls();updateDesktopSimulatorUi();
 loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V9.0 : lecture continue du morceau complet, sans boucle de huit mesures.");
+   setStatus("Prêt — V9.1 : simulateur ordinateur activé par défaut.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");
@@ -1293,6 +1427,11 @@ loadLibrary()
  .catch(error=>setStatus(error.message));
 ui.start.addEventListener("click",start);ui.stop.addEventListener("click",()=>stop(true));ui.calibrate.addEventListener("click",beginCalibration);
 ui.demo.addEventListener("click",startDemo);ui.journey.addEventListener("click",startJourney);ui.quality.addEventListener("click",toggleFixedMix);
+ui.desktopSimBtn.addEventListener("click",()=>setDesktopSimulation(!desktopSimActive));
+[ui.simSpeed,ui.simAccel,ui.simBrake,ui.simTurn].forEach(input=>input.addEventListener("input",()=>{readDesktopControls();updateDesktopControlLabels();}));
+ui.simLinkPedals.addEventListener("change",()=>{desktopSimLastUpdate=performance.now();updateDesktopControlLabels();});
+ui.simResetSignals.addEventListener("click",releaseDesktopSignals);
+document.querySelectorAll("[data-sim-preset]").forEach(button=>button.addEventListener("click",()=>applyDesktopPreset(button.dataset.simPreset)));
 ui.record.addEventListener("click",toggleLogging);ui.downloadLog.addEventListener("click",downloadSensorLog);
 ui.trackSelect.addEventListener("change",()=>requestTrackSwitch(ui.trackSelect.value,"select"));
 ui.previousTrack.addEventListener("click",()=>requestTrackSwitch(nextTrackId(-1),"previous"));
@@ -1310,6 +1449,27 @@ ui.autoTrackDuration.addEventListener("change",()=>{
 document.querySelectorAll(".road-mode").forEach(button=>button.addEventListener("click",()=>applyRoadMode(button.dataset.roadMode)));
 document.querySelectorAll(".help-btn").forEach(button=>button.addEventListener("click",()=>openHelp(button.dataset.help)));
 ui.closeHelp.addEventListener("click",closeHelp);ui.helpModal.addEventListener("click",event=>{if(event.target===ui.helpModal)closeHelp();});
-document.addEventListener("keydown",event=>{if(event.key==="Escape")closeHelp();});
+document.addEventListener("keydown",event=>{
+ if(event.key==="Escape"){closeHelp();return;}
+ if(!desktopSimActive||event.target?.matches?.("input,select,textarea"))return;
+ const key=event.key.toLowerCase();
+ if(key==="w"||event.key==="ArrowUp")desktopKeys.accel=true;
+ else if(key==="s"||event.key==="ArrowDown"||event.code==="Space")desktopKeys.brake=true;
+ else if(key==="a"||event.key==="ArrowLeft")desktopKeys.left=true;
+ else if(key==="d"||event.key==="ArrowRight")desktopKeys.right=true;
+ else if(key==="r"){releaseDesktopSignals();return;}
+ else return;
+ event.preventDefault();
+});
+document.addEventListener("keyup",event=>{
+ if(!desktopSimActive)return;
+ const key=event.key.toLowerCase();
+ if(key==="w"||event.key==="ArrowUp")desktopKeys.accel=false;
+ else if(key==="s"||event.key==="ArrowDown"||event.code==="Space")desktopKeys.brake=false;
+ else if(key==="a"||event.key==="ArrowLeft")desktopKeys.left=false;
+ else if(key==="d"||event.key==="ArrowRight")desktopKeys.right=false;
+ else return;
+ event.preventDefault();
+});
 [ui.responsiveness,ui.accelSensitivity,ui.turnSensitivity].forEach(input=>input.addEventListener("input",updateSettingValues));
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=8.6"));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.1"));
