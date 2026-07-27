@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V8.8 — Dubidubidu Test",
+  "name": "DrivePulse V8.9 — Dubidubidu Rules Test",
   "short_name": "DrivePulse",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "Test privé du moteur musical adaptatif avec cinq stems de Dubidubidu."
+  "description": "Test privé avec règles personnalisées pour KEYS, VOICE, BOUNCE, PULSE et SPARK."
 }

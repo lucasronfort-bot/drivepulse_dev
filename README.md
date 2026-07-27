@@ -1,4 +1,4 @@
-# DrivePulse Web V8.8 — Dubidubidu Test
+# DrivePulse Web V8.9 — Dubidubidu Test
 
 Cette version contient uniquement **Dubidubidu — Christell**, intégré pour un essai privé et local.
 
@@ -23,3 +23,11 @@ Les cinq stems reçus sont des MP3 stéréo à 128 kb/s. Ils semblent provenir d
 ## Usage
 
 Version destinée uniquement à un test privé. Ne pas publier le ZIP, les fichiers audio ou un dépôt GitHub public contenant ce dossier audio.
+
+## Règles V8.9
+
+- KEYS et VOICE restent toujours actifs.
+- BOUNCE réagit à la vitesse, à l’énergie et au freinage.
+- PULSE progresse avec la vitesse.
+- SPARK réagit uniquement à l’accélération et aux virages.
+- Les cinq stems sont disponibles dans toutes les scènes afin que ces règles restent valables durant tout le morceau.

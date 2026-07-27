@@ -222,7 +222,7 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V8.8 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V8.9 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
  if(library.tracks.length){
@@ -706,6 +706,21 @@ function busBehaviorLevel(behavior){
  const lowSpeedEnabled=true;
  const lowSpeedFade=lowSpeedEnabled?1-smoothstep(26,34,speedKmh):0;
  switch(behavior){
+  case "pulse_speed":
+   // PULSE suit uniquement la vitesse relative au mode routier.
+   return clamp(smoothstep(.06,.92,speedIntensity)*.84,0,.84);
+  case "spark_accel_turn":
+   // SPARK apparaît uniquement avec une accélération ou un virage.
+   return clamp(Math.max(smoothstep(.05,.55,accel)*.74,smoothstep(.05,.55,turn)*.74),0,.74);
+  case "bounce_speed_energy_brake":
+   // BOUNCE est réveillé par la vitesse, l'énergie globale ou le freinage.
+   return clamp(Math.max(
+    smoothstep(.08,.72,speedIntensity)*.76,
+    smoothstep(.12,.72,e)*.78,
+    smoothstep(.08,.65,brake)*.86
+   ),0,.86);
+  case "keys_always":return .68;
+  case "voice_always":return .64;
   case "rhythm":return clamp(smoothstep(.20,.62,e)*(.78-brake*.70),0,.78);
   case "tops":return clamp(Math.max(smoothstep(.38,.72,e)*.54,accel*.48,turn*.48),0,.60);
   case "bass":return clamp(smoothstep(.26,.62,e)*.70,0,.70);
@@ -853,15 +868,14 @@ function updateUi(){
  ui.shortMemoryMeter.value=shortMemory;ui.longMemoryMeter.value=longMemory;
 
  const displayedTrack=trackById(currentTrackId);ui.chord.textContent=displayedTrack?`${displayedTrack.title} · ${displayedTrack.edition}`:"Bibliothèque";
- ui.bass.textContent=levels.bass>.58?"Pleine":levels.bass>.22?"Active":"Légère";
- ui.drum.textContent=levels.rhythm>.65?"Complète":levels.rhythm>.20?"Progressive":"Réduite";
- ui.arp.textContent=levels.lead>.46?"Présent":levels.lead>.08?"Discret":"Retiré";
+ ui.bass.textContent=levels.bass>.68?"Forte":levels.bass>.24?"Active":"Repos";
+ ui.drum.textContent=levels.rhythm>.66?"Rapide":levels.rhythm>.20?"Progressive":"Lente";
+ ui.arp.textContent=levels.lead>.05?"Permanente":"Erreur";
  ui.filter.textContent=smoothed.brake>.18?"Fermé":"Ouvert";
  ui.variation.textContent=SCENE_LABELS[targetScene];
- const specialCharacter=currentCharacters().find(item=>item.id==="piano");
- const specialBehavior=manifest?.bus_behaviors?.piano;
- if(specialBehavior==="low_speed")ui.idle.textContent=speedKmh<=30?`${specialCharacter?.name||"Couche basse vitesse"} active`:`${specialCharacter?.name||"Couche basse vitesse"} hors plage`;
- else ui.idle.textContent=specialCharacter?`${specialCharacter.name} adaptatif`:"Aucune couche spéciale";
+ const keysAlways=manifest?.bus_behaviors?.harmony==="keys_always";
+ const voiceAlways=manifest?.bus_behaviors?.lead==="voice_always";
+ ui.idle.textContent=keysAlways&&voiceAlways?"KEYS + VOICE actifs":"Fond adaptatif";
 
  ui.motionX.textContent=rawMotion.x.toFixed(2);ui.motionY.textContent=rawMotion.y.toFixed(2);ui.motionZ.textContent=rawMotion.z.toFixed(2);
  ui.imuLong.textContent=imuLongitudinal.toFixed(2);ui.imuLat.textContent=imuLateral.toFixed(2);
@@ -1130,7 +1144,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v8-8-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v8-9-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1165,9 +1179,9 @@ async function start(){
 
   ui.start.disabled=true;ui.calibrate.disabled=!motionGranted;ui.stop.disabled=false;ui.demo.disabled=false;ui.journey.disabled=false;
   ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(motionGranted?(sensorCalibration.calibrated?"V8.8 active : bibliothèque multi-morceaux et calibration 3D prêtes.":"V8.8 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles.");
+  setStatus(motionGranted?(sensorCalibration.calibrated?"V8.9 active : bibliothèque multi-morceaux et calibration 3D prêtes.":"V8.9 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles.");
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V8.8.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V8.9.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1209,7 +1223,7 @@ loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V8.8 : Dubidubidu chargé pour un test privé.");
+   setStatus("Prêt — V8.9 : nouvelles règles PULSE, SPARK, BOUNCE, KEYS et VOICE actives.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");

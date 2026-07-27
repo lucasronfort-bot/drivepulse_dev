@@ -16,11 +16,11 @@
     "lead"
   ],
   "bus_behaviors": {
-    "rhythm": "rhythm",
-    "tops": "accent",
-    "bass": "bass",
-    "harmony": "foundation",
-    "lead": "voice"
+    "rhythm": "pulse_speed",
+    "tops": "spark_accel_turn",
+    "bass": "bounce_speed_energy_brake",
+    "harmony": "keys_always",
+    "lead": "voice_always"
   },
   "characters": [
     {
@@ -28,7 +28,7 @@
       "emoji": "🥁",
       "name": "PULSE",
       "role": "Drums",
-      "description": "Entre avec la vitesse et se retire au freinage",
+      "description": "Progression continue avec la vitesse",
       "color": "#ff5d67",
       "timing": "beat"
     },
@@ -37,7 +37,7 @@
       "emoji": "✨",
       "name": "SPARK",
       "role": "Other / synthés",
-      "description": "Réagit aux accélérations et aux virages",
+      "description": "Activé uniquement par l’accélération et les virages",
       "color": "#ffc13d",
       "timing": "beat"
     },
@@ -46,16 +46,16 @@
       "emoji": "🔊",
       "name": "BOUNCE",
       "role": "Bass",
-      "description": "Renforce progressivement la vitesse",
+      "description": "Activé par la vitesse, l’énergie et le freinage",
       "color": "#25c5ff",
-      "timing": "bar"
+      "timing": "beat"
     },
     {
       "id": "harmony",
       "emoji": "🎹",
       "name": "KEYS",
       "role": "Piano / harmonie",
-      "description": "Fond musical permanent et respirations",
+      "description": "Toujours actif par défaut",
       "color": "#f06ec7",
       "timing": "immediate"
     },
@@ -64,9 +64,9 @@
       "emoji": "🎙️",
       "name": "VOICE",
       "role": "Vocals",
-      "description": "Apparaît lorsque la conduite devient énergique",
+      "description": "Toujours active par défaut",
       "color": "#b965ff",
-      "timing": "bar"
+      "timing": "immediate"
     }
   ],
   "bus_output_gain": {
@@ -81,7 +81,10 @@
       "start": 0.603719,
       "files": {
         "tops": "audio/dubidubidu-test/intro/tops.m4a",
-        "harmony": "audio/dubidubidu-test/intro/harmony.m4a"
+        "harmony": "audio/dubidubidu-test/intro/harmony.m4a",
+        "rhythm": "audio/dubidubidu-test/intro/rhythm.m4a",
+        "bass": "audio/dubidubidu-test/intro/bass.m4a",
+        "lead": "audio/dubidubidu-test/intro/lead.m4a"
       }
     },
     "groove": {
@@ -109,7 +112,9 @@
       "files": {
         "tops": "audio/dubidubidu-test/breakdown/tops.m4a",
         "harmony": "audio/dubidubidu-test/breakdown/harmony.m4a",
-        "lead": "audio/dubidubidu-test/breakdown/lead.m4a"
+        "lead": "audio/dubidubidu-test/breakdown/lead.m4a",
+        "rhythm": "audio/dubidubidu-test/breakdown/rhythm.m4a",
+        "bass": "audio/dubidubidu-test/breakdown/bass.m4a"
       }
     },
     "chorus": {
@@ -128,8 +133,27 @@
         "rhythm": "audio/dubidubidu-test/finale/rhythm.m4a",
         "tops": "audio/dubidubidu-test/finale/tops.m4a",
         "bass": "audio/dubidubidu-test/finale/bass.m4a",
-        "lead": "audio/dubidubidu-test/finale/lead.m4a"
+        "lead": "audio/dubidubidu-test/finale/lead.m4a",
+        "harmony": "audio/dubidubidu-test/finale/harmony.m4a"
       }
     }
+  },
+  "reaction_rules": {
+    "default_active": [
+      "KEYS",
+      "VOICE"
+    ],
+    "PULSE": [
+      "speed"
+    ],
+    "SPARK": [
+      "acceleration",
+      "turn"
+    ],
+    "BOUNCE": [
+      "speed",
+      "energy",
+      "braking"
+    ]
   }
 }

@@ -1,6 +1,6 @@
 track_id;source_stem;character;role;movement;scene;gain;status
-dubidubidu-test;Drum.mp3;PULSE;rhythm;vitesse/énergie/freinage;toutes sauf breakdown;1.1
-dubidubidu-test;Other.mp3;SPARK;accent;accélération/virage;toutes;1.8
-dubidubidu-test;Bass.mp3;BOUNCE;bass;vitesse;groove/drive/chorus/finale;2.2
-dubidubidu-test;Piano.mp3;KEYS;foundation;fond permanent;intro/groove/drive/breakdown/chorus;2.5
-dubidubidu-test;Vocal.mp3;VOICE;voice;forte énergie/refrain;groove/drive/breakdown/chorus/finale;1.35
+dubidubidu-test;Piano.mp3;KEYS;foundation;toujours actif;toutes;stable;active
+dubidubidu-test;Vocal.mp3;VOICE;voice;toujours active;toutes;stable;active
+dubidubidu-test;Bass.mp3;BOUNCE;bass;vitesse/énergie/freinage;toutes;adaptatif;active
+dubidubidu-test;Drum.mp3;PULSE;rhythm;progression avec vitesse;toutes;adaptatif;active
+dubidubidu-test;Other.mp3;SPARK;accent;accélération/virage;toutes;adaptatif;active

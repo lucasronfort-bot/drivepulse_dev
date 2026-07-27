@@ -1,9 +1,9 @@
-const CACHE="drivepulse-v8-8-dubidubidu-test";
+const CACHE="drivepulse-v8-9-dubidubidu-test";
 const CORE=[
  "./",
  "./index.html",
- "./style.css?v=8.8",
- "./app.js?v=8.8",
+ "./style.css?v=8.9",
+ "./app.js?v=8.9",
  "./manifest.webmanifest",
  "./audio/library.json",
  "./audio/README.md"
