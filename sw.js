@@ -1,9 +1,9 @@
-const CACHE="drivepulse-v9-1-desktop-simulator";
+const CACHE="drivepulse-working-library-19";
 const CORE=[
  "./",
  "./index.html",
- "./style.css?v=9.1",
- "./app.js?v=9.1",
+ "./style.css?v=9.5",
+ "./app.js?v=9.5",
  "./manifest.webmanifest",
  "./audio/library.json",
  "./audio/README.md"

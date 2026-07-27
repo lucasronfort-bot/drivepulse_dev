@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V9.1 — Desktop Simulator",
+  "name": "DrivePulse V9.5",
   "short_name": "DrivePulse",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "Prototype DrivePulse avec commandes ordinateur pour la vitesse, l’accélération, le freinage et les virages."
+  "description": "Simulateur DrivePulse avec bibliothèque séquentielle de 14 morceaux continus."
 }

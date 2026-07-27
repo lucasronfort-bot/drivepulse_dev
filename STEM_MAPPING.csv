@@ -1,6 +1,64 @@
-track_id;source_stem;character;role;movement;playback;status
-dubidubidu-test;Drum.mp3;PULSE;Drums;speed;continuous;used
-dubidubidu-test;Other.mp3;SPARK;Other / synths;acceleration + turn;continuous;used
-dubidubidu-test;Bass.mp3;BOUNCE;Bass;speed + energy + braking;continuous;used
-dubidubidu-test;Piano.mp3;KEYS;Piano / harmony;always;continuous;used
-dubidubidu-test;Vocal.mp3;VOICE;Vocals;always;continuous;used
+track_id;source_stem;character;role;movement;playback;gain;status
+dubidubidu-test;Drum.mp3;PULSE;Drums;vitesse;continuous;1.05;utilisé
+dubidubidu-test;Other.mp3;SPARK;Other / synthés;accélération + virages;continuous;1.08;utilisé
+dubidubidu-test;Bass.mp3;BOUNCE;Bass;vitesse + énergie + freinage;continuous;1.08;utilisé
+dubidubidu-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;1.05;utilisé
+dubidubidu-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.08;utilisé
+butterfly-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.94;utilisé
+butterfly-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.08;utilisé
+butterfly-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;0.96;utilisé
+butterfly-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.05;utilisé
+blame-it-on-me-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+blame-it-on-me-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.08;utilisé
+blame-it-on-me-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;0.98;utilisé
+blame-it-on-me-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.06;utilisé
+modern-talking-feat-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.94;utilisé
+modern-talking-feat-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.08;utilisé
+modern-talking-feat-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;0.98;utilisé
+modern-talking-feat-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.06;utilisé
+on-and-on-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.94;utilisé
+on-and-on-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.08;utilisé
+on-and-on-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;0.98;utilisé
+on-and-on-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.06;utilisé
+shania-impress-remix-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+shania-impress-remix-test;Other.mp3;SPARK;Other / synthés;accélération + virages;continuous;1.16;utilisé
+shania-impress-remix-test;Bass.mp3;BOUNCE;Bass;vitesse + énergie + freinage;continuous;1.05;utilisé
+shania-impress-remix-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;0.98;utilisé
+shania-impress-remix-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;0.98;utilisé
+ziak-i-will-survive-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.90;utilisé
+ziak-i-will-survive-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.05;utilisé
+ziak-i-will-survive-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.10;utilisé
+ziak-i-will-survive-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.00;utilisé
+whispering-still-little-rose-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+whispering-still-little-rose-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.04;utilisé
+whispering-still-little-rose-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.04;utilisé
+whispering-still-little-rose-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;0.98;utilisé
+whispering-still-little-rose-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.02;utilisé
+first-thing-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+first-thing-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.04;utilisé
+first-thing-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.04;utilisé
+first-thing-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;0.98;utilisé
+first-thing-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.02;utilisé
+unsteady-justin-caruso-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+unsteady-justin-caruso-test;Other.mp3;SPARK;Other / synthés;accélération + virages;continuous;1.06;utilisé
+unsteady-justin-caruso-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.06;utilisé
+unsteady-justin-caruso-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;0.98;utilisé
+unsteady-justin-caruso-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.02;utilisé
+danza-kuduro-instrumental-remix-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+danza-kuduro-instrumental-remix-test;Other.mp3 (bande > 2,8 kHz);SPARK;Other / synthés;toujours actif;continuous;1.10;dérivé par crossover
+danza-kuduro-instrumental-remix-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.04;utilisé
+danza-kuduro-instrumental-remix-test;Other.mp3 (bande < 2,8 kHz);KEYS;Piano / harmonie;toujours actif;continuous;1.02;dérivé par crossover
+danza-kuduro-instrumental-remix-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.02;utilisé
+minuit-jacuzi-data-remix-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.90;utilisé
+minuit-jacuzi-data-remix-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.02;utilisé
+minuit-jacuzi-data-remix-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.08;utilisé
+minuit-jacuzi-data-remix-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.16;utilisé
+jerk-it-out-lets-go-miguelx2-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+jerk-it-out-lets-go-miguelx2-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;1.08;utilisé
+jerk-it-out-lets-go-miguelx2-test;Bass.mp3;BOUNCE;Bass;accélération + virages;continuous;1.08;utilisé
+jerk-it-out-lets-go-miguelx2-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;0.92;utilisé
+i-will-wait-for-you-test;Drum.mp3;PULSE;Drums;vitesse;continuous;0.92;utilisé
+i-will-wait-for-you-test;Other.mp3;SPARK;Other / synthés;toujours actif;continuous;0.98;utilisé
+i-will-wait-for-you-test;Bass_derived.flac (Drum + Other, 35–180 Hz);BOUNCE;Couche grave;accélération + virages;continuous;1.08;dérivé — Bass.mp3 source invalide
+i-will-wait-for-you-test;Piano.mp3;KEYS;Piano / harmonie;toujours actif;continuous;1.35;utilisé
+i-will-wait-for-you-test;Vocal.mp3;VOICE;Vocals;toujours active;continuous;1.12;utilisé

@@ -1,1 +1,28 @@
 track_id;scene;stem;peak_db;rms_db;notes
+butterfly-test;continuous;rhythm;0.0;-14.9;gain moteur 0.94
+butterfly-test;continuous;tops;-1.8;-24.9;gain moteur 1.08
+butterfly-test;continuous;bass;-0.8;-16.9;gain moteur 0.96
+butterfly-test;continuous;lead;-0.5;-18.9;gain moteur 1.05
+shania-impress-remix-test;continuous;rhythm;-0.1;-19.1;gain moteur 0.92
+shania-impress-remix-test;continuous;tops;-4.7;-24.6;gain moteur 1.16
+shania-impress-remix-test;continuous;bass;-6.6;-20.7;gain moteur 1.05
+shania-impress-remix-test;continuous;harmony;-0.8;-19.4;gain moteur 0.98
+shania-impress-remix-test;continuous;lead;-0.8;-18.7;gain moteur 0.98
+danza-kuduro-instrumental-remix-test;continuous;rhythm;-5.3;-20.1;gain moteur 0.92
+danza-kuduro-instrumental-remix-test;continuous;tops;-11.7;-34.2;gain moteur 1.10
+danza-kuduro-instrumental-remix-test;continuous;bass;-13.2;-37.5;gain moteur 1.04
+danza-kuduro-instrumental-remix-test;continuous;harmony;-6.1;-20.2;gain moteur 1.02
+danza-kuduro-instrumental-remix-test;continuous;lead;-5.9;-25.3;gain moteur 1.02
+minuit-jacuzi-data-remix-test;continuous;rhythm;-0.1;-16.2;gain moteur 0.90
+minuit-jacuzi-data-remix-test;continuous;tops;-0.3;-17.1;gain moteur 1.02
+minuit-jacuzi-data-remix-test;continuous;bass;-3.1;-20.0;gain moteur 1.08
+minuit-jacuzi-data-remix-test;continuous;lead;-4.7;-29.5;gain moteur 1.16
+jerk-it-out-lets-go-miguelx2-test;continuous;rhythm;0.1;-18.2;gain moteur 0.92
+jerk-it-out-lets-go-miguelx2-test;continuous;tops;0.4;-20.6;gain moteur 1.08
+jerk-it-out-lets-go-miguelx2-test;continuous;bass;-2.6;-22.3;gain moteur 1.08
+jerk-it-out-lets-go-miguelx2-test;continuous;lead;0.8;-15.8;gain moteur 0.92
+i-will-wait-for-you-test;continuous;rhythm;0.0;-15.9;gain moteur 0.92
+i-will-wait-for-you-test;continuous;tops;0.0;-17.5;gain moteur 0.98
+i-will-wait-for-you-test;continuous;bass;-5.0;-18.6;gain moteur 1.08 — dérivé 35–180 Hz
+i-will-wait-for-you-test;continuous;harmony;-8.0;-34.5;gain moteur 1.35
+i-will-wait-for-you-test;continuous;lead;-0.8;-22.3;gain moteur 1.12

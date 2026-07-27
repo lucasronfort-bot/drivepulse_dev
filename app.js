@@ -8,7 +8,6 @@ const ui={
  section:$("sectionState"),mode:$("modeLabel"),bar:$("barLabel"),road:$("roadState"),roadHelp:$("roadModeHelp"),
  accel:$("accelMeter"),brake:$("brakeMeter"),turn:$("turnMeter"),music:$("musicMeter"),
  accelValue:$("accelValue"),brakeValue:$("brakeValue"),turnValue:$("turnValue"),musicValue:$("musicValue"),
- shortMemory:$("shortMemoryState"),longMemory:$("longMemoryState"),shortMemoryMeter:$("shortMemoryMeter"),longMemoryMeter:$("longMemoryMeter"),
  chord:$("chordState"),bass:$("bassState"),drum:$("drumState"),arp:$("arpState"),filter:$("filterState"),variation:$("variationState"),idle:$("idleState"),
  agentGrid:$("agentGrid"),
  responsiveness:$("responsiveness"),accelSensitivity:$("accelSensitivity"),turnSensitivity:$("turnSensitivity"),
@@ -18,7 +17,6 @@ const ui={
  imuLong:$("imuLongState"),imuLat:$("imuLatState"),gpsAccel:$("gpsAccelState"),yawRate:$("yawRateState"),headingRate:$("headingRateState"),
  motionHz:$("motionHzState"),audioMode:$("audioModeState"),
  trackSelect:$("trackSelect"),previousTrack:$("previousTrackBtn"),nextTrack:$("nextTrackBtn"),
- autoTrack:$("autoTrackToggle"),autoTrackDuration:$("autoTrackDuration"),trackCountdown:$("trackCountdown"),
  trackTitle:$("trackTitle"),trackEdition:$("trackEdition"),trackArtist:$("trackArtist"),
  trackSwitchState:$("trackSwitchState"),musicAttribution:$("musicAttribution"),
  desktopSimBtn:$("desktopSimBtn"),desktopSimPanel:$("desktopSimulatorPanel"),desktopSimState:$("desktopSimState"),
@@ -107,8 +105,10 @@ let currentTrackId="";
 let currentTrack=null;
 let pendingTrackSwitch=null;
 let trackStartedAt=0;
-let autoTrackDeadline=0;
-let lastCountdownUpdate=0;
+let preparedEndTrack=null;
+let endTrackPreparation=null;
+let endTrackPreparationFrom="";
+let endTrackPreparationToken=0;
 let running=false;
 let audioCtx=null;
 let masterGain=null;
@@ -238,9 +238,11 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V9.1 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V9.5 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
+ localStorage.removeItem("drivepulse-auto-track");
+ localStorage.removeItem("drivepulse-auto-track-minutes");
  if(library.tracks.length){
   const savedTrackId=localStorage.getItem("drivepulse-track-id")||"";
   currentTrackId=library.tracks.some(track=>track.id===savedTrackId)
@@ -327,20 +329,12 @@ function renderTrackLibrary(){
  ui.trackSelect.disabled=!hasTracks;
  ui.previousTrack.disabled=!hasTracks;
  ui.nextTrack.disabled=!hasTracks;
- ui.autoTrack.disabled=!hasTracks;
- ui.autoTrackDuration.disabled=!hasTracks;
- const durations=library.auto_rotation_minutes||[3,5,10,15];
- ui.autoTrackDuration.innerHTML=durations.map(value=>`<option value="${value}">${value} minutes</option>`).join("");
- const savedDuration=localStorage.getItem("drivepulse-auto-track-minutes")||"5";
- ui.autoTrackDuration.value=durations.map(String).includes(savedDuration)?savedDuration:String(durations[0]);
- ui.autoTrack.checked=hasTracks&&localStorage.getItem("drivepulse-auto-track")==="1";
  ui.start.disabled=!hasTracks;
  if(!hasTracks){
   ui.trackTitle.textContent="Aucun morceau installé";
   ui.trackEdition.textContent="Bibliothèque prête pour de nouveaux tests";
   ui.trackArtist.textContent="En attente de nouveaux stems";
   ui.trackSwitchState.textContent="Vide";
-  ui.trackCountdown.textContent="Indisponible";
   ui.chord.textContent="Aucune source";
   ui.musicAttribution.textContent="Aucun morceau audio n’est actuellement intégré au prototype.";
   renderAgents();
@@ -364,43 +358,11 @@ function updateTrackUi(){
  ui.trackTitle.textContent=track.title;
  ui.trackEdition.textContent=track.edition;
  ui.trackArtist.textContent=track.artist;
+ if(!ui.trackSwitchState.classList.contains("loading"))ui.trackSwitchState.textContent=running?"Actif":"Prêt";
  ui.chord.textContent=`${track.title} · ${track.edition}`;
  ui.musicAttribution.textContent=`Musique adaptée de « ${track.title} » par ${track.artist} — licence ${track.license}.`;
  document.documentElement.style.setProperty("--track-accent",track.accent||"#38a4ff");
 }
-
-function resetAutoTrackDeadline(){
- if(!running||!ui.autoTrack.checked){
-  autoTrackDeadline=0;
-  if(ui.trackCountdown)ui.trackCountdown.textContent=ui.autoTrack.checked?"En attente du démarrage":"Désactivé";
-  return;
- }
- const minutes=Math.max(1,finite(ui.autoTrackDuration.value)||5);
- autoTrackDeadline=performance.now()+minutes*60000;
-}
-
-function nextTrackId(direction=1){
- if(!library?.tracks?.length)return currentTrackId;
- const index=Math.max(0,library.tracks.findIndex(track=>track.id===currentTrackId));
- return library.tracks[(index+direction+library.tracks.length)%library.tracks.length].id;
-}
-
-function updateTrackCountdown(){
- if(!ui.trackCountdown)return;
- if(!ui.autoTrack.checked){
-  ui.trackCountdown.textContent="Désactivé";
-  return;
- }
- if(!running||!autoTrackDeadline){
-  ui.trackCountdown.textContent="En attente du démarrage";
-  return;
- }
- const remaining=Math.max(0,autoTrackDeadline-performance.now());
- const minutes=Math.floor(remaining/60000);
- const seconds=Math.floor((remaining%60000)/1000);
- ui.trackCountdown.textContent=`Prochain changement : ${minutes}:${String(seconds).padStart(2,"0")}`;
-}
-
 
 
 function createAudioGraph(){
@@ -493,7 +455,8 @@ function pruneSceneCache(){
   audioDataKey(currentTrackId,targetScene),
   pendingTransition?audioDataKey(pendingTransition.trackId||currentTrackId,pendingTransition.scene):null,
   nextLoopGroup?audioDataKey(nextLoopGroup.trackId||currentTrackId,nextLoopGroup.scene):null,
-  pendingTrackSwitch?audioDataKey(pendingTrackSwitch.trackId,"intro"):null
+  pendingTrackSwitch?audioDataKey(pendingTrackSwitch.trackId,"intro"):null,
+  preparedEndTrack?audioDataKey(preparedEndTrack.trackId,"intro"):null
  ].filter(Boolean));
  const candidates=[...sceneCache.keys()].filter(key=>!protectedScenes.has(key));
  while(sceneCache.size>6&&candidates.length){
@@ -578,6 +541,79 @@ function nextGridTime(step,minimumTime=audioCtx.currentTime+.06){
  return currentPhaseStart+Math.ceil(elapsed/step)*step;
 }
 
+function nextTrackId(direction=1,fromTrackId=currentTrackId){
+ if(!library?.tracks?.length)return fromTrackId;
+ const foundIndex=library.tracks.findIndex(track=>track.id===fromTrackId);
+ const index=foundIndex>=0?foundIndex:0;
+ return library.tracks[(index+direction+library.tracks.length)%library.tracks.length].id;
+}
+
+function clearPreparedEndTrack(){
+ endTrackPreparationToken++;
+ preparedEndTrack=null;
+ endTrackPreparation=null;
+ endTrackPreparationFrom="";
+}
+
+async function prepareNextTrackForEnd(fromTrackId=currentTrackId){
+ if(!running||!library?.tracks?.length||library.tracks.length<2)return null;
+ if(preparedEndTrack?.fromTrackId===fromTrackId)return preparedEndTrack;
+ if(endTrackPreparation&&endTrackPreparationFrom===fromTrackId)return endTrackPreparation;
+
+ const trackId=nextTrackId(1,fromTrackId);
+ const track=trackById(trackId);
+ if(!track||trackId===fromTrackId)return null;
+ const token=++endTrackPreparationToken;
+ endTrackPreparationFrom=fromTrackId;
+ endTrackPreparation=(async()=>{
+  try{
+   const nextManifest=await loadTrackManifest(trackId);
+   await loadScene("intro",trackId);
+   if(!running||token!==endTrackPreparationToken||currentTrackId!==fromTrackId)return null;
+   preparedEndTrack={fromTrackId,trackId,track,manifest:nextManifest};
+   return preparedEndTrack;
+  }catch(error){
+   if(token===endTrackPreparationToken)console.warn("Préchargement du morceau suivant impossible.",error);
+   return null;
+  }finally{
+   if(token===endTrackPreparationToken){
+    endTrackPreparation=null;
+    endTrackPreparationFrom="";
+   }
+  }
+ })();
+ return endTrackPreparation;
+}
+
+function commitTrackChange(item){
+ currentTrackId=item.trackId;
+ currentTrack=item.track;
+ manifest=item.manifest;
+ applyTrackTiming(manifest);
+ localStorage.setItem("drivepulse-track-id",currentTrackId);
+ renderAgents();
+
+ currentScene="intro";
+ targetScene="intro";
+ candidateScene="intro";
+ candidateSince=performance.now();
+ activeGroup=item.group;
+ currentPhaseStart=item.when;
+ nextLoopTime=item.when+(isContinuousTrack(manifest)?Math.max(1,TRACK_DURATION-TRACK_CROSSFADE):LOOP_DURATION);
+ pendingTrackSwitch=null;
+ trackStartedAt=performance.now();
+ clearPreparedEndTrack();
+
+ updateTrackUi();
+ updateSectionTimeline();
+ applyBusMix(true);
+ warmLikelyScenes();
+ prefetchAllAudio(currentTrackId);
+ prepareNextTrackForEnd(currentTrackId);
+ ui.trackSwitchState.textContent="Actif";
+ ui.trackSwitchState.classList.remove("loading");
+ setStatus(`${currentTrack.title} — ${currentTrack.edition} actif.`);
+}
 
 async function requestTrackSwitch(trackId,reason="manual"){
  if(!library||trackId===currentTrackId||pendingTrackSwitch)return;
@@ -586,11 +622,11 @@ async function requestTrackSwitch(trackId,reason="manual"){
 
  if(!running){
   await activateTrackMetadata(trackId);
-  resetAutoTrackDeadline();
   setStatus(`Sélection : ${nextTrack.title} — ${nextTrack.edition}.`);
   return;
  }
 
+ clearPreparedEndTrack();
  ui.trackSwitchState.textContent="Chargement";
  ui.trackSwitchState.classList.add("loading");
  setStatus(`Préparation de ${nextTrack.title} — ${nextTrack.edition}…`);
@@ -618,52 +654,14 @@ async function requestTrackSwitch(trackId,reason="manual"){
 
   window.setTimeout(()=>{
    if(!running||pendingTrackSwitch?.group!==group)return;
-   const item=pendingTrackSwitch;
-   currentTrackId=item.trackId;
-   currentTrack=item.track;
-   manifest=item.manifest;
-   applyTrackTiming(manifest);
-   localStorage.setItem("drivepulse-track-id",currentTrackId);
-   renderAgents();
-
-   currentScene="intro";
-   targetScene="intro";
-   candidateScene="intro";
-   candidateSince=performance.now();
-   activeGroup=item.group;
-   currentPhaseStart=item.when;
-   nextLoopTime=item.when+(isContinuousTrack(manifest)?Math.max(1,TRACK_DURATION-TRACK_CROSSFADE):LOOP_DURATION);
-   pendingTrackSwitch=null;
-   trackStartedAt=performance.now();
-
-   updateTrackUi();
-   updateSectionTimeline();
-   resetAutoTrackDeadline();
-   applyBusMix(true);
-   warmLikelyScenes();
-   prefetchAllAudio(currentTrackId);
-   ui.trackSwitchState.textContent="Actif";
-   ui.trackSwitchState.classList.remove("loading");
-   setStatus(`${currentTrack.title} — ${currentTrack.edition} actif.`);
+   commitTrackChange(pendingTrackSwitch);
   },Math.max(0,(boundary-audioCtx.currentTime)*1000));
  }catch(error){
   pendingTrackSwitch=null;
   ui.trackSwitchState.textContent="Erreur";
   ui.trackSwitchState.classList.remove("loading");
+  prepareNextTrackForEnd(currentTrackId);
   setStatus(error.message||"Changement de morceau impossible.");
- }
-}
-
-function maybeAutoSwitchTrack(){
- if(!running||!ui.autoTrack.checked||pendingTrackSwitch||library.tracks.length<2)return;
- const now=performance.now();
- if(autoTrackDeadline&&now>=autoTrackDeadline){
-  requestTrackSwitch(nextTrackId(1),"automatic");
-  autoTrackDeadline=now+Math.max(1,finite(ui.autoTrackDuration.value)||5)*60000;
- }
- if(now-lastCountdownUpdate>500){
-  lastCountdownUpdate=now;
-  updateTrackCountdown();
  }
 }
 
@@ -728,16 +726,35 @@ function scheduler(){
   if(nextLoopGroup&&now>=nextLoopGroup.when-.012){
    const item=nextLoopGroup;
    nextLoopGroup=null;
-   activeGroup=item.group;
-   currentPhaseStart=item.when;
-   nextLoopTime=item.when+Math.max(1,TRACK_DURATION-TRACK_CROSSFADE);
-   applyBusMix(true);
+   if(item.trackSwitch)commitTrackChange(item);
+   else{
+    activeGroup=item.group;
+    currentPhaseStart=item.when;
+    nextLoopTime=item.when+Math.max(1,TRACK_DURATION-TRACK_CROSSFADE);
+    applyBusMix(true);
+    prepareNextTrackForEnd(currentTrackId);
+   }
   }
   if(!nextLoopGroup&&nextLoopTime<now+SCHEDULE_AHEAD){
-   const group=startSceneGroup(currentScene,nextLoopTime,0,TRACK_CROSSFADE);
-   if(group){
-    fadeOutGroup(activeGroup,nextLoopTime,TRACK_CROSSFADE);
-    nextLoopGroup={scene:currentScene,trackId:currentTrackId,when:nextLoopTime,group};
+   const prepared=preparedEndTrack?.fromTrackId===currentTrackId?preparedEndTrack:null;
+   if(prepared){
+    const group=startSceneGroup("intro",nextLoopTime,0,TRACK_CROSSFADE,prepared.trackId);
+    if(group){
+     fadeOutGroup(activeGroup,nextLoopTime,TRACK_CROSSFADE);
+     nextLoopGroup={...prepared,scene:"intro",when:nextLoopTime,group,trackSwitch:true};
+     ui.trackSwitchState.textContent="Suivant";
+    }
+   }else{
+    prepareNextTrackForEnd(currentTrackId);
+    // Sécurité : si le morceau suivant n’est pas prêt à la toute dernière seconde,
+    // le titre courant redémarre sans silence. Le changement aura lieu à sa fin suivante.
+    if(nextLoopTime<=now+.16){
+     const group=startSceneGroup(currentScene,nextLoopTime,0,TRACK_CROSSFADE);
+     if(group){
+      fadeOutGroup(activeGroup,nextLoopTime,TRACK_CROSSFADE);
+      nextLoopGroup={scene:currentScene,trackId:currentTrackId,when:nextLoopTime,group,trackSwitch:false};
+     }
+    }
    }
   }
   return;
@@ -794,6 +811,11 @@ function busBehaviorLevel(behavior){
     smoothstep(.12,.72,e)*.78,
     smoothstep(.08,.65,brake)*.86
    ),0,.86);
+  case "spark_always":return .66;
+  case "bounce_accel_turn":return clamp(Math.max(
+   smoothstep(.04,.58,accel)*.84,
+   smoothstep(.04,.58,turn)*.84
+  ),0,.84);
   case "keys_always":return .68;
   case "voice_always":return .64;
   case "rhythm":return clamp(smoothstep(.20,.62,e)*(.78-brake*.70),0,.78);
@@ -902,8 +924,8 @@ async function setDesktopSimulation(active,restoreSensors=true){
  localStorage.setItem("drivepulse-desktop-sim",desktopSimActive?"1":"0");
  desktopSimLastUpdate=performance.now();
  if(desktopSimActive){
-  if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";}
-  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;ui.journey.textContent="Scénario trajet complet";}
+  if(demoTimer){clearInterval(demoTimer);demoTimer=null;if(ui.demo)ui.demo.textContent="Simulation libre";}
+  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;if(ui.journey)ui.journey.textContent="Scénario trajet complet";}
   if(watchId!=null&&navigator.geolocation)navigator.geolocation.clearWatch(watchId);
   watchId=null;
   window.removeEventListener("devicemotion",handleMotion);
@@ -1013,7 +1035,9 @@ function maybeUpdateTarget(){
 }
 
 function updateSectionTimeline(){
- document.querySelectorAll("[data-section]").forEach(node=>node.classList.toggle("current",node.dataset.section===currentScene));
+ const nodes=document.querySelectorAll("[data-section]");
+ if(!nodes.length)return;
+ nodes.forEach(node=>node.classList.toggle("current",node.dataset.section===currentScene));
 }
 
 function modeLabel(){
@@ -1048,33 +1072,28 @@ function updateUi(){
  ui.speedMusicTrack.style.width=`${Math.round(speedIntensity*100)}%`;
  ui.energy.textContent=`${Math.round(energy*100)}%`;
  ui.energyTrack.style.width=`${Math.round(energy*100)}%`;
- ui.section.textContent=SCENE_LABELS[currentScene];
- ui.mode.textContent=modeLabel();
+ if(ui.section)ui.section.textContent=SCENE_LABELS[currentScene];
+ if(ui.mode)ui.mode.textContent=modeLabel();
  ui.bar.textContent=`${formatClock(playbackPosition)} / ${formatClock(playbackTotal)}`;
  ui.road.textContent=profile.label;
  ui.roadHelp.textContent=profile.help;
 
  ui.accel.value=smoothed.accel;ui.brake.value=smoothed.brake;ui.turn.value=smoothed.turn;ui.music.value=energy;
  ui.accelValue.value=smoothed.accel.toFixed(2);ui.brakeValue.value=smoothed.brake.toFixed(2);ui.turnValue.value=smoothed.turn.toFixed(2);ui.musicValue.value=energy.toFixed(2);
- ui.shortMemory.textContent=`${Math.round(shortMemory*100)}%`;ui.longMemory.textContent=`${Math.round(longMemory*100)}%`;
- ui.shortMemoryMeter.value=shortMemory;ui.longMemoryMeter.value=longMemory;
-
  const displayedTrack=trackById(currentTrackId);ui.chord.textContent=displayedTrack?`${displayedTrack.title} · ${displayedTrack.edition}`:"Bibliothèque";
  ui.bass.textContent=levels.bass>.68?"Forte":levels.bass>.24?"Active":"Repos";
  ui.drum.textContent=levels.rhythm>.66?"Rapide":levels.rhythm>.20?"Progressive":"Lente";
  ui.arp.textContent=levels.lead>.05?"Permanente":"Erreur";
  ui.filter.textContent=smoothed.brake>.18?"Fermé":"Ouvert";
  ui.variation.textContent=SCENE_LABELS[targetScene];
- const keysAlways=manifest?.bus_behaviors?.harmony==="keys_always";
- const voiceAlways=manifest?.bus_behaviors?.lead==="voice_always";
- ui.idle.textContent=keysAlways&&voiceAlways?"KEYS + VOICE actifs":"Fond adaptatif";
+ const defaultActive=manifest?.reaction_rules?.default_active||[];
+ ui.idle.textContent=defaultActive.length?`${defaultActive.join(" + ")} actifs`:"Fond adaptatif";
 
  ui.motionX.textContent=rawMotion.x.toFixed(2);ui.motionY.textContent=rawMotion.y.toFixed(2);ui.motionZ.textContent=rawMotion.z.toFixed(2);
  ui.imuLong.textContent=imuLongitudinal.toFixed(2);ui.imuLat.textContent=imuLateral.toFixed(2);
  ui.gpsAccel.textContent=`${gpsAcceleration.toFixed(2)} m/s²`;ui.yawRate.textContent=`${verticalYawRate.toFixed(1)} °/s`;ui.headingRate.textContent=`${gpsHeadingRate.toFixed(1)} °/s`;
  ui.motionHz.textContent=`${motionFrequency.toFixed(0)} Hz`;ui.audioMode.textContent=fixedMixMode?"Mix fixe":"Adaptatif low latency";
  updateCalibrationBadge();
- updateTrackCountdown();
 }
 
 function maybeLogSensors(){
@@ -1103,7 +1122,6 @@ function updateEngine(){
  updateDesktopSimulation();
  updateDrivingMemory();
  maybeUpdateTarget();
- maybeAutoSwitchTrack();
  applyBusMix();
  updateUi();
  maybeLogSensors();
@@ -1286,9 +1304,9 @@ function startGps(){
 
 function startDemo(){
  if(desktopSimActive)setDesktopSimulation(false,false);
- if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";setStatus("Simulation arrêtée.");return;}
+ if(demoTimer){clearInterval(demoTimer);demoTimer=null;if(ui.demo)ui.demo.textContent="Simulation libre";setStatus("Simulation arrêtée.");return;}
  if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;}
- let phase=0;ui.demo.textContent="Arrêter la simulation";setStatus("Simulation low latency active.");
+ let phase=0;if(ui.demo)ui.demo.textContent="Arrêter la simulation";setStatus("Simulation low latency active.");
  demoTimer=setInterval(()=>{
   phase+=.075;speedKmh=Math.max(0,50+48*Math.sin(phase*.22));
   smoothed.accel=clamp((Math.sin(phase)+.15)*.72);smoothed.brake=clamp((-Math.sin(phase*.51)-.34)*.86);smoothed.turn=clamp(Math.abs(Math.sin(phase*.37))*.92);
@@ -1297,9 +1315,9 @@ function startDemo(){
 
 function startJourney(){
  if(desktopSimActive)setDesktopSimulation(false,false);
- if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;ui.journey.textContent="Scénario trajet complet";setStatus("Scénario arrêté.");return;}
- if(demoTimer){clearInterval(demoTimer);demoTimer=null;ui.demo.textContent="Simulation libre";}
- let elapsed=0;ui.journey.textContent="Arrêter le scénario";setStatus("Scénario : ville → campagne → autoroute → freinage.");
+ if(journeyTimer){clearInterval(journeyTimer);journeyTimer=null;if(ui.journey)ui.journey.textContent="Scénario trajet complet";setStatus("Scénario arrêté.");return;}
+ if(demoTimer){clearInterval(demoTimer);demoTimer=null;if(ui.demo)ui.demo.textContent="Simulation libre";}
+ let elapsed=0;if(ui.journey)ui.journey.textContent="Arrêter le scénario";setStatus("Scénario : ville → campagne → autoroute → freinage.");
  journeyTimer=setInterval(()=>{
   elapsed+=.1;let targetSpeed=0,acceleration=0,brake=0,turn=0;
   if(elapsed<8){targetSpeed=0;roadMode="city";}
@@ -1310,7 +1328,7 @@ function startJourney(){
   else if(elapsed<102){targetSpeed=80+(elapsed-82)/20*50;acceleration=.43;roadMode="highway";}
   else if(elapsed<126){targetSpeed=130;}
   else if(elapsed<138){targetSpeed=130-(elapsed-126)/12*125;brake=.76;}
-  else{targetSpeed=0;clearInterval(journeyTimer);journeyTimer=null;ui.journey.textContent="Scénario trajet complet";setStatus("Scénario terminé.");}
+  else{targetSpeed=0;clearInterval(journeyTimer);journeyTimer=null;if(ui.journey)ui.journey.textContent="Scénario trajet complet";setStatus("Scénario terminé.");}
   applyRoadMode(roadMode);speedKmh=Math.max(0,targetSpeed);
   smoothed.accel=lowPass(smoothed.accel,acceleration,.25);smoothed.brake=lowPass(smoothed.brake,brake,.25);smoothed.turn=lowPass(smoothed.turn,turn,.25);
  },100);
@@ -1318,7 +1336,7 @@ function startJourney(){
 
 function toggleFixedMix(){
  fixedMixMode=!fixedMixMode;
- ui.quality.textContent=fixedMixMode?"Revenir à l’adaptatif":"Mix fixe A/B";
+ if(ui.quality)ui.quality.textContent=fixedMixMode?"Revenir à l’adaptatif":"Mix fixe A/B";
  ui.audioMode.textContent=fixedMixMode?"Mix fixe":"Adaptatif low latency";
  if(fixedMixMode){requestTargetScene("chorus");setStatus("Mix fixe : niveaux stables pour contrôler la qualité audio.");}
  else{candidateSince=0;setStatus("Mix adaptatif low latency réactivé.");}
@@ -1339,7 +1357,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v9-1-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v9-5-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1350,7 +1368,7 @@ async function start(){
   return;
  }
  try{
-  generation++;setStatus("Chargement des cinq stems complets synchronisés…");
+  generation++;setStatus("Chargement des stems complets synchronisés…");
   createAudioGraph();
   const resumePromise=audioCtx.resume();
   const permissionPromise=desktopSimActive?Promise.resolve(false):requestMotionPermission();
@@ -1363,7 +1381,6 @@ async function start(){
 
   running=true;currentScene="intro";targetScene="intro";candidateScene="intro";candidateSince=performance.now();
   trackStartedAt=performance.now();
-  resetAutoTrackDeadline();
   const startAt=audioCtx.currentTime+.28;
   activeGroup=startSceneGroup("intro",startAt,0,.025);
   currentPhaseStart=startAt;nextLoopTime=startAt+(isContinuousTrack()?Math.max(1,TRACK_DURATION-TRACK_CROSSFADE):LOOP_DURATION);
@@ -1371,12 +1388,13 @@ async function start(){
   if(motionGranted)window.addEventListener("devicemotion",handleMotion,{passive:true});
   startGps();
   prefetchAllAudio();
+  prepareNextTrackForEnd(currentTrackId);
 
-  ui.start.disabled=true;ui.calibrate.disabled=desktopSimActive||!motionGranted;ui.stop.disabled=false;ui.demo.disabled=false;ui.journey.disabled=false;
-  ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(desktopSimActive?"V9.1 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.1 active : lecture continue et calibration 3D prêtes.":"V9.1 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
+  ui.start.disabled=true;ui.calibrate.disabled=desktopSimActive||!motionGranted;ui.stop.disabled=false;if(ui.demo)ui.demo.disabled=false;if(ui.journey)ui.journey.disabled=false;
+  if(ui.quality)ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
+  setStatus(desktopSimActive?"V9.5 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.5 active : lecture continue et calibration 3D prêtes.":"V9.5 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.1.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.5.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1390,11 +1408,14 @@ function stop(updateStatus=true){
  activeGroups.forEach(group=>cancelFutureGroup(group));activeGroups.clear();
  if(audioCtx)audioCtx.close().catch(()=>{});
  audioCtx=masterGain=masterFilter=masterCompressor=null;
- busNodes.clear();sceneCache.clear();sceneLoads.clear();sceneAccess.clear();activeGroup=pendingTransition=nextLoopGroup=pendingTrackSwitch=null;autoTrackDeadline=0;
+ busNodes.clear();sceneCache.clear();sceneLoads.clear();sceneAccess.clear();activeGroup=pendingTransition=nextLoopGroup=pendingTrackSwitch=null;clearPreparedEndTrack();
  BUSES.forEach(bus=>setAgentVisualState(bus.id,"inactive"));
  if(sensorLogging){sensorLogging=false;ui.record.textContent="Enregistrer capteurs";}
- ui.start.disabled=!library?.tracks?.length;ui.calibrate.disabled=true;ui.stop.disabled=true;ui.demo.disabled=true;ui.journey.disabled=true;ui.quality.disabled=true;ui.record.disabled=true;
- ui.demo.textContent="Simulation libre";ui.journey.textContent="Scénario trajet complet";ui.quality.textContent="Mix fixe A/B";fixedMixMode=false;
+ ui.start.disabled=!library?.tracks?.length;ui.calibrate.disabled=true;ui.stop.disabled=true;ui.record.disabled=true;
+ if(ui.demo){ui.demo.disabled=true;ui.demo.textContent="Simulation libre";}
+ if(ui.journey){ui.journey.disabled=true;ui.journey.textContent="Scénario trajet complet";}
+ if(ui.quality){ui.quality.disabled=true;ui.quality.textContent="Mix fixe A/B";}
+ fixedMixMode=false;
  updateCalibrationBadge();if(updateStatus)setStatus("Arrêté.");
 }
 
@@ -1418,7 +1439,7 @@ loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V9.1 : simulateur ordinateur activé par défaut.");
+   setStatus("Prêt — V9.5 : simulateur ordinateur activé par défaut.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");
@@ -1426,7 +1447,7 @@ loadLibrary()
  })
  .catch(error=>setStatus(error.message));
 ui.start.addEventListener("click",start);ui.stop.addEventListener("click",()=>stop(true));ui.calibrate.addEventListener("click",beginCalibration);
-ui.demo.addEventListener("click",startDemo);ui.journey.addEventListener("click",startJourney);ui.quality.addEventListener("click",toggleFixedMix);
+if(ui.demo)ui.demo.addEventListener("click",startDemo);if(ui.journey)ui.journey.addEventListener("click",startJourney);if(ui.quality)ui.quality.addEventListener("click",toggleFixedMix);
 ui.desktopSimBtn.addEventListener("click",()=>setDesktopSimulation(!desktopSimActive));
 [ui.simSpeed,ui.simAccel,ui.simBrake,ui.simTurn].forEach(input=>input.addEventListener("input",()=>{readDesktopControls();updateDesktopControlLabels();}));
 ui.simLinkPedals.addEventListener("change",()=>{desktopSimLastUpdate=performance.now();updateDesktopControlLabels();});
@@ -1436,16 +1457,6 @@ ui.record.addEventListener("click",toggleLogging);ui.downloadLog.addEventListene
 ui.trackSelect.addEventListener("change",()=>requestTrackSwitch(ui.trackSelect.value,"select"));
 ui.previousTrack.addEventListener("click",()=>requestTrackSwitch(nextTrackId(-1),"previous"));
 ui.nextTrack.addEventListener("click",()=>requestTrackSwitch(nextTrackId(1),"next"));
-ui.autoTrack.addEventListener("change",()=>{
- localStorage.setItem("drivepulse-auto-track",ui.autoTrack.checked?"1":"0");
- resetAutoTrackDeadline();
- updateTrackCountdown();
-});
-ui.autoTrackDuration.addEventListener("change",()=>{
- localStorage.setItem("drivepulse-auto-track-minutes",ui.autoTrackDuration.value);
- resetAutoTrackDeadline();
- updateTrackCountdown();
-});
 document.querySelectorAll(".road-mode").forEach(button=>button.addEventListener("click",()=>applyRoadMode(button.dataset.roadMode)));
 document.querySelectorAll(".help-btn").forEach(button=>button.addEventListener("click",()=>openHelp(button.dataset.help)));
 ui.closeHelp.addEventListener("click",closeHelp);ui.helpModal.addEventListener("click",event=>{if(event.target===ui.helpModal)closeHelp();});
@@ -1472,4 +1483,4 @@ document.addEventListener("keyup",event=>{
  event.preventDefault();
 });
 [ui.responsiveness,ui.accelSensitivity,ui.turnSensitivity].forEach(input=>input.addEventListener("input",updateSettingValues));
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.1"));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.5"));

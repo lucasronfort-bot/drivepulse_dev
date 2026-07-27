@@ -1,2 +1,15 @@
 track_id;title;edition;artist;license;manifest;profile;playback_mode
 dubidubidu-test;Dubidubidu;Continuous Drive Test;Christell;Test local uniquement;audio/dubidubidu-test/manifest.json;drive;continuous
+butterfly-test;Butterfly;Private Drive Test;Marnik & Hard Lights;Test local uniquement;audio/butterfly-test/manifest.json;drive;
+blame-it-on-me-test;Blame It On Me;Private Drive Test;CADMIUM & Shiah Maisel;Test local uniquement;audio/blame-it-on-me-test/manifest.json;drive;continuous
+modern-talking-feat-test;Modern Talking feat. Eric Singleton;Private Drive Test;Modern Talking feat. Eric Singleton;Test local uniquement;audio/modern-talking-feat-test/manifest.json;drive;continuous
+on-and-on-test;On & On;Private Drive Test;Cartoon & Jéja;Test local uniquement;audio/on-and-on-test/manifest.json;drive;continuous
+shania-impress-remix-test;That Don't Impress Me Much;Xelpy Remix — Private Drive Test;Shania Twain / Xelpy;Test local uniquement;audio/shania-impress-remix-test/manifest.json;drive;continuous
+ziak-i-will-survive-test;I Will Survive (Disco Remix);Private Drive Test;Ziak;Test local uniquement;audio/ziak-i-will-survive-test/manifest.json;drive;continuous
+whispering-still-little-rose-test;Whispering Still;Little Rose Remix — Private Drive Test;SRTW ft. Charity Children;Test local uniquement;audio/whispering-still-little-rose-test/manifest.json;drive;continuous
+first-thing-test;First Thing;Private Drive Test;Artiste à préciser;Test local uniquement;audio/first-thing-test/manifest.json;drive;continuous
+unsteady-justin-caruso-test;Unsteady;Justin Caruso Remix — Private Drive Test;X Ambassadors / Justin Caruso;Test local uniquement;audio/unsteady-justin-caruso-test/manifest.json;drive;continuous
+danza-kuduro-instrumental-remix-test;Danza Kuduro Instrumental Remix;Private Drive Test;Don Omar ft. Lucenzo;Test local uniquement;audio/danza-kuduro-instrumental-remix-test/manifest.json;drive;continuous
+minuit-jacuzi-data-remix-test;Minuit Jacuzi;datA Remix — Private Drive Test;Tepr;Test local uniquement;audio/minuit-jacuzi-data-remix-test/manifest.json;drive;continuous
+jerk-it-out-lets-go-miguelx2-test;Jerk It Out;Let’s Go! Remix — Private Drive Test;Miguelx2;Test local uniquement;audio/jerk-it-out-lets-go-miguelx2-test/manifest.json;drive;continuous
+i-will-wait-for-you-test;I Will Wait For You;Private Drive Test;Tomas Skyldeberg;Test local uniquement;audio/i-will-wait-for-you-test/manifest.json;drive;continuous

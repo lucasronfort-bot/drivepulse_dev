@@ -99,7 +99,7 @@ h1 span{
 
 .summary-strip{
   display:grid;
-  grid-template-columns:1.15fr 1.05fr 1fr 1fr 1fr;
+  grid-template-columns:1.15fr 1.05fr 1fr 1fr;
   border:1px solid var(--line);
   border-radius:18px;
   overflow:hidden;
@@ -149,15 +149,21 @@ h1 span{
 .utility-bar{
   display:flex;
   align-items:center;
-  gap:9px;
-  margin:12px 0;
+  justify-content:space-between;
+  gap:14px;
+  margin:14px 0 16px;
+  padding:6px 2px
 }
-.utility-bar button{min-height:40px;font-size:.87rem}
+.utility-bar button{min-height:42px;font-size:.87rem}
+.utility-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.utility-status{display:flex;align-items:center;gap:10px;margin-left:auto}
+.utility-actions button{padding-left:16px;padding-right:16px}
+#recordBtn{font-weight:700}
+#desktopSimBtn{min-width:180px}
 .measure-pill{
   display:flex;
   align-items:center;
   gap:9px;
-  margin-left:auto;
   padding:9px 13px;
   border:1px solid var(--line);
   border-radius:12px;
@@ -165,6 +171,7 @@ h1 span{
   font-size:.82rem;
 }
 .measure-pill span{color:var(--muted)}
+.measure-pill strong{font-variant-numeric:tabular-nums}
 
 .glass-panel{
   border:1px solid var(--line);
@@ -380,7 +387,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   gap:13px;
   margin-top:13px;
 }
-.section-panel,.memory-panel,.sensor-panel,.composition-panel{padding:17px}
+.section-panel,.sensor-panel,.composition-panel{padding:17px}
 .section-timeline{
   display:grid;
   grid-template-columns:repeat(6,1fr);
@@ -406,12 +413,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
   background:linear-gradient(180deg,rgba(168,76,255,.16),rgba(168,76,255,.05));
   box-shadow:inset 0 -2px 0 var(--violet);
 }
-.memory-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.memory-grid>div{padding:12px;border-radius:13px;background:var(--panel-soft)}
-.memory-grid span{color:var(--muted);font-size:.74rem}
-.memory-grid strong{float:right;font-size:.80rem}
 meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
-.memory-grid>div:nth-child(2) meter{accent-color:var(--violet)}
 
 .sensor-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .metric{padding:12px;border-radius:13px;background:var(--panel-soft)}
@@ -475,7 +477,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
 @media(max-width:900px){
   .topbar{align-items:flex-start;flex-direction:column}
   .top-actions{justify-content:flex-start}
-  .summary-strip{grid-template-columns:repeat(5,minmax(145px,1fr));overflow-x:auto}
+  .summary-strip{grid-template-columns:repeat(4,minmax(145px,1fr));overflow-x:auto}
   .summary-card{border-right:1px solid var(--line)}
   .main-layout{grid-template-columns:1fr}
   .agent-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -484,7 +486,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
   .app-shell{padding-left:12px;padding-right:12px}
   .top-actions{display:grid;grid-template-columns:1.5fr 1fr 1fr;width:100%}
   .action-button{padding-left:8px;padding-right:8px;font-size:.78rem}
-  .utility-bar{display:grid;grid-template-columns:1fr 1fr}
+  .utility-bar{display:grid;grid-template-columns:1fr}
   .measure-pill{grid-column:1/-1;margin-left:0;justify-content:center}
   .agent-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .lower-layout,.details-layout{grid-template-columns:1fr}
@@ -504,7 +506,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
 }
 
 /* V8.1 diagnostics and extended utility controls */
-.utility-bar{flex-wrap:wrap}
+.utility-bar{display:flex;flex-wrap:wrap}
 .diagnostic-panel{margin-top:13px;padding:17px}
 .diagnostic-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .diagnostic-grid>div{padding:11px;border-radius:12px;background:var(--panel-soft)}
@@ -514,7 +516,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
 .calibration-badge.ready{color:var(--green);border-color:rgba(57,216,117,.35)}
 .calibration-badge.running{color:var(--blue);border-color:rgba(56,164,255,.35)}
 @media(max-width:900px){.diagnostic-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:700px){.utility-bar{grid-template-columns:repeat(2,1fr)}.diagnostic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.utility-bar{display:flex;flex-direction:column;align-items:stretch}.utility-actions,.utility-status{width:100%}.utility-status{justify-content:space-between}.measure-pill{justify-content:space-between;width:100%}.diagnostic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 
 .music-library-panel{padding:18px}
@@ -537,8 +539,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
   color:var(--muted);
   font-size:.72rem;
 }
-.track-select,
-.auto-track-options select{
+.track-select{
   width:100%;
   min-height:42px;
   padding:8px 11px;
@@ -574,31 +575,6 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
 .track-information strong{font-size:.92rem}
 .track-information span{margin-top:3px;color:#76caff;font-size:.78rem;font-weight:750}
 .track-information small{margin-top:5px;color:var(--muted);font-size:.70rem}
-.auto-track-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-top:13px;
-}
-.auto-track-row strong{display:block;font-size:.80rem}
-.auto-track-row small{display:block;margin-top:3px;color:var(--muted);font-size:.67rem}
-.auto-track-options{
-  display:grid;
-  grid-template-columns:auto 1fr;
-  align-items:center;
-  gap:8px;
-  margin-top:11px;
-}
-.auto-track-options label{color:var(--muted);font-size:.70rem}
-.auto-track-options select{min-height:36px;font-size:.73rem}
-.auto-track-options strong{
-  grid-column:1/-1;
-  color:#c9d6e4;
-  font-size:.72rem;
-  text-align:right;
-}
-
 .orchestra-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}.stem-lab-link{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border:1px solid rgba(67,182,255,.32);border-radius:11px;background:rgba(67,182,255,.10);color:#93d8ff;text-decoration:none;font-size:.73rem;font-weight:800}.stem-lab-link:hover{background:rgba(67,182,255,.17)}@media(max-width:760px){.orchestra-actions{align-items:flex-start}.stem-lab-link{width:100%}}
 
 
@@ -618,8 +594,7 @@ meter{width:100%;height:8px;margin-top:12px;accent-color:var(--blue)}
   font-size:1rem;
 }
 .track-select:disabled,
-.track-navigation button:disabled,
-.auto-track-options select:disabled{
+.track-navigation button:disabled{
   opacity:.48;
   cursor:not-allowed;
 }
