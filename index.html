@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060a12">
+<title>DrivePulse V8.8</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css?v=8.8">
+</head>
+<body>
+<main class="app-shell">
+
+<header class="topbar">
+  <div class="brand-block">
+    <p class="eyebrow">Toyota C-HR · Prototype V8.8</p>
+    <h1>Drive<span>Pulse</span></h1>
+    <p id="status" class="status"><i></i> Prêt</p>
+  </div>
+
+  <div class="top-actions">
+    <button id="startBtn" class="primary action-button">▶ Démarrer</button>
+    <button id="calibrateBtn" class="action-button" disabled>◎ Calibration 3D</button>
+    <button id="stopBtn" class="action-button danger" disabled>■ Arrêter</button>
+  </div>
+</header>
+
+<section class="summary-strip" aria-label="Résumé de conduite">
+  <article class="summary-card">
+    <span>Mode route</span>
+    <strong id="roadState">Ville</strong>
+    <small id="roadModeHelp">Référence 50 km/h</small>
+  </article>
+
+  <article class="summary-card speed-summary">
+    <span>Vitesse</span>
+    <strong><b id="speed">0</b> km/h</strong>
+    <small>GPS en temps réel</small>
+  </article>
+
+  <article class="summary-card">
+    <span>Vitesse musicale</span>
+    <strong id="speedMusicState">0%</strong>
+    <div class="summary-progress"><i id="speedMusicTrack"></i></div>
+  </article>
+
+  <article class="summary-card">
+    <span>Énergie</span>
+    <strong id="energyLabel">0%</strong>
+    <div class="summary-progress energy-progress"><i id="energyTrack"></i></div>
+  </article>
+
+  <article class="summary-card">
+    <span>Section</span>
+    <strong id="sectionState">Intro</strong>
+    <small id="modeLabel">Cruise</small>
+  </article>
+</section>
+
+<section class="utility-bar">
+  <button id="demoBtn" disabled>Simulation libre</button>
+  <button id="journeyBtn" disabled>Scénario trajet complet</button>
+  <button id="qualityBtn" disabled>Mix fixe A/B</button>
+  <button id="recordBtn" disabled>Enregistrer capteurs</button>
+  <button id="downloadLogBtn" disabled>Télécharger CSV</button>
+  <div class="measure-pill">
+    <span>Mesure</span>
+    <strong id="barLabel">1 / 8</strong>
+  </div>
+</section>
+
+<div class="main-layout">
+
+  <section class="glass-panel orchestra-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="section-kicker">Orchestre musical</p>
+        <h2>Personnages actifs</h2>
+        <p>Cinq personnages issus des stems séparés de Dubidubidu.</p>
+      </div>
+
+      <div class="orchestra-actions">
+        <div class="agent-legend">
+          <span><i class="dot active"></i> Actif</span>
+          <span><i class="dot transition"></i> Transition</span>
+          <span><i class="dot inactive"></i> Inactif</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="agentGrid" class="agent-grid" aria-live="polite"></div>
+  </section>
+
+  <aside class="side-column">
+
+
+    <section class="glass-panel music-library-panel">
+      <div class="panel-heading compact">
+        <div>
+          <p class="section-kicker">Bibliothèque musicale</p>
+          <h2>Choix du morceau</h2>
+        </div>
+        <span id="trackSwitchState" class="track-switch-state">Vide</span>
+      </div>
+
+      <label class="track-select-label" for="trackSelect">Morceau / arrangement</label>
+      <select id="trackSelect" class="track-select"></select>
+
+      <div class="track-navigation">
+        <button id="previousTrackBtn" type="button" aria-label="Morceau précédent">◀ Précédent</button>
+        <button id="nextTrackBtn" type="button" aria-label="Morceau suivant">Suivant ▶</button>
+      </div>
+
+      <div class="track-information">
+        <strong id="trackTitle">Dubidubidu</strong>
+        <span id="trackEdition">Private Drive Test</span>
+        <small id="trackArtist">Christell</small>
+      </div>
+
+      <div class="auto-track-row">
+        <div>
+          <strong>Rotation automatique</strong>
+          <small>Change à la prochaine mesure avec un fondu.</small>
+        </div>
+        <label class="switch">
+          <input id="autoTrackToggle" type="checkbox">
+          <span></span>
+        </label>
+      </div>
+
+      <div class="auto-track-options">
+        <label for="autoTrackDuration">Changer toutes les</label>
+        <select id="autoTrackDuration">
+          <option value="3">3 minutes</option>
+          <option value="5" selected>5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+        </select>
+        <strong id="trackCountdown">Désactivé</strong>
+      </div>
+    </section>
+
+    <section class="glass-panel settings-panel">
+      <div class="panel-heading compact">
+        <div>
+          <p class="section-kicker">Réglages</p>
+          <h2>Réactivité</h2>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-title">
+          <label for="responsiveness">Réactivité musicale</label>
+          <button class="help-btn" type="button" data-help="responsiveness" aria-label="Aide sur la réactivité musicale">?</button>
+        </div>
+        <div class="range-line">
+          <input id="responsiveness" type="range" min="0.5" max="2" step="0.1" value="1">
+          <output id="responsivenessValue">1.0</output>
+        </div>
+        <small>Vitesse à laquelle l’arrangement réagit aux changements.</small>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-title">
+          <label for="accelSensitivity">Sensibilité accélération</label>
+          <button class="help-btn" type="button" data-help="accelSensitivity" aria-label="Aide sur la sensibilité à l'accélération">?</button>
+        </div>
+        <div class="range-line">
+          <input id="accelSensitivity" type="range" min="0.6" max="1.8" step="0.05" value="1">
+          <output id="accelSensitivityValue">1.00</output>
+        </div>
+        <small>Influence des accélérations et des freinages.</small>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-title">
+          <label for="turnSensitivity">Sensibilité virage</label>
+          <button class="help-btn" type="button" data-help="turnSensitivity" aria-label="Aide sur la sensibilité aux virages">?</button>
+        </div>
+        <div class="range-line">
+          <input id="turnSensitivity" type="range" min="0.6" max="1.8" step="0.05" value="1">
+          <output id="turnSensitivityValue">1.00</output>
+        </div>
+        <small>Influence des courbes sur les mélodies et percussions.</small>
+      </div>
+    </section>
+
+    <section class="glass-panel road-panel">
+      <div class="panel-heading compact">
+        <div>
+          <p class="section-kicker">Mode route</p>
+          <h2>Profil de vitesse</h2>
+        </div>
+      </div>
+
+      <div class="road-modes" role="group" aria-label="Profil de route">
+        <button class="road-mode active" data-road-mode="city"><b>▥</b><span>Ville</span><small>50 km/h</small></button>
+        <button class="road-mode" data-road-mode="country"><b>▲</b><span>Campagne</span><small>80 km/h</small></button>
+        <button class="road-mode" data-road-mode="highway"><b>║</b><span>Autoroute</span><small>130 km/h</small></button>
+      </div>
+    </section>
+
+  </aside>
+</div>
+
+<div class="lower-layout">
+
+  <section class="glass-panel section-panel">
+    <div class="panel-heading compact">
+      <div>
+        <p class="section-kicker">Structure</p>
+        <h2>Section musicale actuelle</h2>
+      </div>
+    </div>
+
+    <div class="section-timeline" id="sectionTimeline">
+      <div data-section="intro"><b>⌂</b><span>Intro</span></div>
+      <div data-section="groove"><b>●</b><span>Groove</span></div>
+      <div data-section="drive"><b>▥</b><span>Montée</span></div>
+      <div data-section="breakdown"><b>≈</b><span>Respiration</span></div>
+      <div data-section="chorus"><b>★</b><span>Refrain</span></div>
+      <div data-section="finale"><b>↻</b><span>Finale</span></div>
+    </div>
+  </section>
+
+  <section class="glass-panel memory-panel">
+    <div class="panel-heading compact">
+      <div>
+        <p class="section-kicker">Mémoire de conduite</p>
+        <h2>Climat du trajet</h2>
+      </div>
+    </div>
+
+    <div class="memory-grid">
+      <div>
+        <span>Court terme</span>
+        <strong id="shortMemoryState">0%</strong>
+        <meter id="shortMemoryMeter" min="0" max="1" value="0"></meter>
+      </div>
+      <div>
+        <span>Long terme</span>
+        <strong id="longMemoryState">0%</strong>
+        <meter id="longMemoryMeter" min="0" max="1" value="0"></meter>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="details-layout">
+
+  <section class="glass-panel sensor-panel">
+    <div class="panel-heading compact">
+      <div>
+        <p class="section-kicker">Capteurs</p>
+        <h2>Dynamique du véhicule</h2>
+      </div>
+    </div>
+
+    <div class="sensor-grid">
+      <article class="metric">
+        <div><span>Accélération</span><output id="accelValue">0.00</output></div>
+        <meter id="accelMeter" min="0" max="1" value="0"></meter>
+      </article>
+      <article class="metric">
+        <div><span>Freinage</span><output id="brakeValue">0.00</output></div>
+        <meter id="brakeMeter" min="0" max="1" value="0"></meter>
+      </article>
+      <article class="metric">
+        <div><span>Virage</span><output id="turnValue">0.00</output></div>
+        <meter id="turnMeter" min="0" max="1" value="0"></meter>
+      </article>
+      <article class="metric">
+        <div><span>Intensité</span><output id="musicValue">0.00</output></div>
+        <meter id="musicMeter" min="0" max="1" value="0"></meter>
+      </article>
+    </div>
+  </section>
+
+  <section class="glass-panel composition-panel">
+    <div class="panel-heading compact">
+      <div>
+        <p class="section-kicker">Mixage adaptatif</p>
+        <h2>État des stems</h2>
+      </div>
+    </div>
+
+    <div class="composition-grid">
+      <div><span>Source</span><strong id="chordState">Kalte Ohren</strong></div>
+      <div><span>Basse</span><strong id="bassState">Douce</strong></div>
+      <div><span>Batterie</span><strong id="drumState">Calme</strong></div>
+      <div><span>Arpège</span><strong id="arpState">Discret</strong></div>
+      <div><span>Filtre</span><strong id="filterState">Ouvert</strong></div>
+      <div><span>Séquence cible</span><strong id="variationState">Intro</strong></div>
+      <div><span>À l’arrêt</span><strong id="idleState">Stems doux</strong></div>
+    </div>
+  </section>
+</div>
+
+
+<section class="glass-panel diagnostic-panel">
+  <div class="panel-heading compact">
+    <div>
+      <p class="section-kicker">Diagnostic V8.6</p>
+      <h2>Fusion Motion + GPS</h2>
+      <p>Ces valeurs permettent de vérifier l’orientation du téléphone et d’exporter un journal du trajet.</p>
+    </div>
+    <strong id="calibrationState" class="calibration-badge">Non calibré</strong>
+  </div>
+
+  <div class="diagnostic-grid">
+    <div><span>Motion X</span><strong id="motionXState">0.00</strong></div>
+    <div><span>Motion Y</span><strong id="motionYState">0.00</strong></div>
+    <div><span>Motion Z</span><strong id="motionZState">0.00</strong></div>
+    <div><span>Longitudinal IMU</span><strong id="imuLongState">0.00</strong></div>
+    <div><span>Latéral IMU</span><strong id="imuLatState">0.00</strong></div>
+    <div><span>Accélération GPS</span><strong id="gpsAccelState">0.00 m/s²</strong></div>
+    <div><span>Rotation verticale</span><strong id="yawRateState">0.0 °/s</strong></div>
+    <div><span>Virage GPS</span><strong id="headingRateState">0.0 °/s</strong></div>
+    <div><span>Fréquence Motion</span><strong id="motionHzState">0 Hz</strong></div>
+    <div><span>Mode audio</span><strong id="audioModeState">Adaptatif</strong></div>
+  </div>
+</section>
+
+<footer class="safety-note">
+  <strong>Sécurité :</strong> manipulations à l’arrêt ou par un passager uniquement. Le téléphone doit rester rigidement fixé.<br>
+  <span id="musicAttribution">Test privé de « Dubidubidu » par Christell — ne pas publier ni redistribuer.</span>
+</footer>
+
+</main>
+
+<div id="helpModal" class="help-modal" hidden>
+  <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <button id="closeHelpBtn" class="help-close" type="button" aria-label="Fermer">×</button>
+    <h2 id="helpTitle">Réglage</h2>
+    <p id="helpText"></p>
+    <p id="helpRecommendation" class="help-recommendation"></p>
+  </div>
+</div>
+
+<script src="app.js?v=8.8"></script>
+</body>
+</html>

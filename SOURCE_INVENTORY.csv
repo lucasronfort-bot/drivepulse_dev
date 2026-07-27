@@ -1,0 +1,6 @@
+track_id;source_file;format;duration;sample_rate;channels;status
+dubidubidu-test;Drum.mp3;MP3 128 kb/s;226.220 s;44100;2;utilisé pour test privé
+dubidubidu-test;Other.mp3;MP3 128 kb/s;226.220 s;44100;2;utilisé pour test privé
+dubidubidu-test;Bass.mp3;MP3 128 kb/s;226.220 s;44100;2;utilisé pour test privé
+dubidubidu-test;Piano.mp3;MP3 128 kb/s;226.220 s;44100;2;utilisé pour test privé
+dubidubidu-test;Vocal.mp3;MP3 128 kb/s;226.220 s;44100;2;utilisé pour test privé

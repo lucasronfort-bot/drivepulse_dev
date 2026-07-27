@@ -1,0 +1,22 @@
+{
+  "version": 3,
+  "default_track": "dubidubidu-test",
+  "tracks": [
+    {
+      "id": "dubidubidu-test",
+      "title": "Dubidubidu",
+      "edition": "Private Drive Test",
+      "artist": "Christell",
+      "license": "Test local uniquement",
+      "manifest": "audio/dubidubidu-test/manifest.json",
+      "profile": "drive",
+      "accent": "#ff70c8"
+    }
+  ],
+  "auto_rotation_minutes": [
+    3,
+    5,
+    10,
+    15
+  ]
+}
