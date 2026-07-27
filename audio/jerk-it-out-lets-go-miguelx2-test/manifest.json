@@ -1,0 +1,112 @@
+{
+  "title": "Jerk It Out (Let’s Go! Remix)",
+  "artist": "Miguelx2",
+  "license": "Test local uniquement — droits réservés",
+  "source_url": "",
+  "bpm": 135.99917763157896,
+  "bar_duration": 1.7647165532879816,
+  "playback_mode": "continuous",
+  "track_duration": 213.498776,
+  "loop_duration": 213.498776,
+  "crossfade_duration": 0.75,
+  "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo — aucune recompression supplémentaire",
+  "source_quality_note": "Stems probablement issus d’une séparation automatique ; résidus possibles entre les pistes.",
+  "buses": [
+    "rhythm",
+    "tops",
+    "bass",
+    "lead"
+  ],
+  "bus_behaviors": {
+    "rhythm": "pulse_speed",
+    "tops": "spark_always",
+    "bass": "bounce_accel_turn",
+    "lead": "voice_always"
+  },
+  "characters": [
+    {
+      "id": "rhythm",
+      "emoji": "🥁",
+      "name": "PULSE",
+      "role": "Drums",
+      "description": "Progression continue avec la vitesse",
+      "color": "#ff5d67",
+      "timing": "beat"
+    },
+    {
+      "id": "tops",
+      "emoji": "✨",
+      "name": "SPARK",
+      "role": "Other / synthés",
+      "description": "Toujours actif par défaut",
+      "color": "#ffc13d",
+      "timing": "immediate"
+    },
+    {
+      "id": "bass",
+      "emoji": "🔊",
+      "name": "BOUNCE",
+      "role": "Bass",
+      "description": "Activé par l’accélération et les virages",
+      "color": "#25c5ff",
+      "timing": "beat"
+    },
+    {
+      "id": "lead",
+      "emoji": "🎙️",
+      "name": "VOICE",
+      "role": "Vocals",
+      "description": "Toujours active par défaut",
+      "color": "#b965ff",
+      "timing": "immediate"
+    }
+  ],
+  "bus_output_gain": {
+    "rhythm": 0.92,
+    "tops": 1.08,
+    "bass": 1.08,
+    "lead": 0.92
+  },
+  "continuous": {
+    "files": {
+      "rhythm": "audio/jerk-it-out-lets-go-miguelx2-test/full/rhythm.mp3",
+      "tops": "audio/jerk-it-out-lets-go-miguelx2-test/full/tops.mp3",
+      "bass": "audio/jerk-it-out-lets-go-miguelx2-test/full/bass.mp3",
+      "lead": "audio/jerk-it-out-lets-go-miguelx2-test/full/lead.mp3"
+    }
+  },
+  "scenes": {
+    "intro": {
+      "label": "Intro"
+    },
+    "groove": {
+      "label": "Groove"
+    },
+    "drive": {
+      "label": "Montée"
+    },
+    "breakdown": {
+      "label": "Respiration"
+    },
+    "chorus": {
+      "label": "Refrain"
+    },
+    "finale": {
+      "label": "Finale"
+    }
+  },
+  "reaction_rules": {
+    "default_active": [
+      "VOICE",
+      "SPARK"
+    ],
+    "PULSE": [
+      "speed"
+    ],
+    "BOUNCE": [
+      "acceleration",
+      "turn"
+    ],
+    "KEYS": []
+  }
+}

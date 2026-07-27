@@ -1,0 +1,112 @@
+{
+  "title": "Minuit Jacuzi (datA Remix)",
+  "artist": "Tepr",
+  "license": "Test local uniquement — droits réservés",
+  "source_url": "",
+  "bpm": 123.046875,
+  "bar_duration": 1.9504761904761905,
+  "playback_mode": "continuous",
+  "track_duration": 264.124082,
+  "loop_duration": 264.124082,
+  "crossfade_duration": 0.75,
+  "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo — aucune recompression supplémentaire",
+  "source_quality_note": "Stems probablement issus d’une séparation automatique ; résidus possibles entre les pistes.",
+  "buses": [
+    "rhythm",
+    "tops",
+    "bass",
+    "lead"
+  ],
+  "bus_behaviors": {
+    "rhythm": "pulse_speed",
+    "tops": "spark_always",
+    "bass": "bounce_accel_turn",
+    "lead": "voice_always"
+  },
+  "characters": [
+    {
+      "id": "rhythm",
+      "emoji": "🥁",
+      "name": "PULSE",
+      "role": "Drums",
+      "description": "Progression continue avec la vitesse",
+      "color": "#ff5d67",
+      "timing": "beat"
+    },
+    {
+      "id": "tops",
+      "emoji": "✨",
+      "name": "SPARK",
+      "role": "Other / synthés",
+      "description": "Toujours actif par défaut",
+      "color": "#ffc13d",
+      "timing": "immediate"
+    },
+    {
+      "id": "bass",
+      "emoji": "🔊",
+      "name": "BOUNCE",
+      "role": "Bass",
+      "description": "Activé par l’accélération et les virages",
+      "color": "#25c5ff",
+      "timing": "beat"
+    },
+    {
+      "id": "lead",
+      "emoji": "🎙️",
+      "name": "VOICE",
+      "role": "Vocals",
+      "description": "Toujours active par défaut",
+      "color": "#b965ff",
+      "timing": "immediate"
+    }
+  ],
+  "bus_output_gain": {
+    "rhythm": 0.9,
+    "tops": 1.02,
+    "bass": 1.08,
+    "lead": 1.16
+  },
+  "continuous": {
+    "files": {
+      "rhythm": "audio/minuit-jacuzi-data-remix-test/full/rhythm.mp3",
+      "tops": "audio/minuit-jacuzi-data-remix-test/full/tops.mp3",
+      "bass": "audio/minuit-jacuzi-data-remix-test/full/bass.mp3",
+      "lead": "audio/minuit-jacuzi-data-remix-test/full/lead.mp3"
+    }
+  },
+  "scenes": {
+    "intro": {
+      "label": "Intro"
+    },
+    "groove": {
+      "label": "Groove"
+    },
+    "drive": {
+      "label": "Montée"
+    },
+    "breakdown": {
+      "label": "Respiration"
+    },
+    "chorus": {
+      "label": "Refrain"
+    },
+    "finale": {
+      "label": "Finale"
+    }
+  },
+  "reaction_rules": {
+    "default_active": [
+      "VOICE",
+      "SPARK"
+    ],
+    "PULSE": [
+      "speed"
+    ],
+    "BOUNCE": [
+      "acceleration",
+      "turn"
+    ],
+    "KEYS": []
+  }
+}
