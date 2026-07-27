@@ -1,0 +1,125 @@
+{
+  "title": "I Will Wait For You",
+  "artist": "Tomas Skyldeberg",
+  "license": "Test local uniquement — droits réservés",
+  "source_url": "",
+  "bpm": 123.046875,
+  "bar_duration": 1.9504761904761905,
+  "playback_mode": "continuous",
+  "track_duration": 211.626667,
+  "loop_duration": 211.626667,
+  "crossfade_duration": 0.75,
+  "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo ; BOUNCE dérivé en FLAC sans perte",
+  "source_quality_note": "Le fichier Bass.mp3 fourni contenait une réponse XML d’erreur « SlowDown » au lieu d’un flux audio. BOUNCE utilise donc une couche grave de secours dérivée des stems Drum et Other (35–180 Hz).",
+  "buses": [
+    "rhythm",
+    "tops",
+    "bass",
+    "harmony",
+    "lead"
+  ],
+  "bus_behaviors": {
+    "rhythm": "pulse_speed",
+    "tops": "spark_always",
+    "bass": "bounce_accel_turn",
+    "harmony": "keys_always",
+    "lead": "voice_always"
+  },
+  "characters": [
+    {
+      "id": "rhythm",
+      "emoji": "🥁",
+      "name": "PULSE",
+      "role": "Drums",
+      "description": "Progression continue avec la vitesse",
+      "color": "#ff5d67",
+      "timing": "beat"
+    },
+    {
+      "id": "tops",
+      "emoji": "✨",
+      "name": "SPARK",
+      "role": "Other / synthés",
+      "description": "Toujours actif par défaut",
+      "color": "#ffc13d",
+      "timing": "immediate"
+    },
+    {
+      "id": "bass",
+      "emoji": "🔊",
+      "name": "BOUNCE",
+      "role": "Couche grave dérivée",
+      "description": "Activé par l’accélération et les virages",
+      "color": "#25c5ff",
+      "timing": "beat"
+    },
+    {
+      "id": "harmony",
+      "emoji": "🎹",
+      "name": "KEYS",
+      "role": "Piano / harmonie",
+      "description": "Toujours actif par défaut",
+      "color": "#f06ec7",
+      "timing": "immediate"
+    },
+    {
+      "id": "lead",
+      "emoji": "🎙️",
+      "name": "VOICE",
+      "role": "Vocals",
+      "description": "Toujours active par défaut",
+      "color": "#b965ff",
+      "timing": "immediate"
+    }
+  ],
+  "bus_output_gain": {
+    "rhythm": 0.92,
+    "tops": 0.98,
+    "bass": 1.08,
+    "harmony": 1.35,
+    "lead": 1.12
+  },
+  "continuous": {
+    "files": {
+      "rhythm": "audio/i-will-wait-for-you-test/full/rhythm.mp3",
+      "tops": "audio/i-will-wait-for-you-test/full/tops.mp3",
+      "bass": "audio/i-will-wait-for-you-test/full/bass.flac",
+      "harmony": "audio/i-will-wait-for-you-test/full/harmony.mp3",
+      "lead": "audio/i-will-wait-for-you-test/full/lead.mp3"
+    }
+  },
+  "scenes": {
+    "intro": {
+      "label": "Intro"
+    },
+    "groove": {
+      "label": "Groove"
+    },
+    "drive": {
+      "label": "Montée"
+    },
+    "breakdown": {
+      "label": "Respiration"
+    },
+    "chorus": {
+      "label": "Refrain"
+    },
+    "finale": {
+      "label": "Finale"
+    }
+  },
+  "reaction_rules": {
+    "default_active": [
+      "VOICE",
+      "SPARK",
+      "KEYS"
+    ],
+    "PULSE": [
+      "speed"
+    ],
+    "BOUNCE": [
+      "acceleration",
+      "turn"
+    ]
+  }
+}
