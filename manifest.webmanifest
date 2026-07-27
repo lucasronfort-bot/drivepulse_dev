@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V8.9 — Dubidubidu Rules Test",
+  "name": "DrivePulse V9.0 — Dubidubidu Continuous Test",
   "short_name": "DrivePulse",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "Test privé avec règles personnalisées pour KEYS, VOICE, BOUNCE, PULSE et SPARK."
+  "description": "Test local avec lecture continue des stems complets et réactions adaptatives."
 }

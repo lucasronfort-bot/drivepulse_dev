@@ -1,33 +1,23 @@
-# DrivePulse Web V8.9 — Dubidubidu Test
+# DrivePulse Web V9.0 — Dubidubidu Continuous Test
 
-Cette version contient uniquement **Dubidubidu — Christell**, intégré pour un essai privé et local.
+Version de test locale. Le morceau n'est pas sous licence Creative Commons et ne doit pas être distribué publiquement.
 
-## Personnages
+## Architecture audio
 
-- PULSE : Drum
-- SPARK : Other
-- BOUNCE : Bass
-- KEYS : Piano
-- VOICE : Vocal
+- 5 stems complets synchronisés depuis 00:00 ;
+- durée : 226.220 secondes, soit environ 3 min 46 s ;
+- aucune découpe en boucles de huit mesures ;
+- aucune recompression supplémentaire : DrivePulse lit directement les MP3 sources ;
+- redémarrage groupé en fin de morceau ;
+- fondu croisé de 0.75 seconde entre la fin et le début ;
+- les changements de conduite modifient les volumes, sans déplacer la tête de lecture.
 
-## Tempo et scènes
+## Règles
 
-- Tempo de travail : 152 BPM
-- Boucles : 8 mesures, soit 12.632 secondes
-- Scènes : Intro, Groove, Montée, Respiration, Refrain et Finale
+- KEYS : toujours actif ;
+- VOICE : toujours active ;
+- PULSE : progression avec la vitesse ;
+- SPARK : accélération et virages ;
+- BOUNCE : vitesse, énergie et freinage.
 
-## Qualité des sources
-
-Les cinq stems reçus sont des MP3 stéréo à 128 kb/s. Ils semblent provenir d’une séparation automatique ; des résidus peuvent rester audibles entre les pistes.
-
-## Usage
-
-Version destinée uniquement à un test privé. Ne pas publier le ZIP, les fichiers audio ou un dépôt GitHub public contenant ce dossier audio.
-
-## Règles V8.9
-
-- KEYS et VOICE restent toujours actifs.
-- BOUNCE réagit à la vitesse, à l’énergie et au freinage.
-- PULSE progresse avec la vitesse.
-- SPARK réagit uniquement à l’accélération et aux virages.
-- Les cinq stems sont disponibles dans toutes les scènes afin que ces règles restent valables durant tout le morceau.
+Les états Intro, Groove, Montée, Respiration, Refrain et Finale restent des indicateurs de conduite. Ils ne remplacent plus le fragment musical joué.

@@ -1,6 +1,6 @@
-track_id;source_stem;character;role;movement;scene;gain;status
-dubidubidu-test;Piano.mp3;KEYS;foundation;toujours actif;toutes;stable;active
-dubidubidu-test;Vocal.mp3;VOICE;voice;toujours active;toutes;stable;active
-dubidubidu-test;Bass.mp3;BOUNCE;bass;vitesse/énergie/freinage;toutes;adaptatif;active
-dubidubidu-test;Drum.mp3;PULSE;rhythm;progression avec vitesse;toutes;adaptatif;active
-dubidubidu-test;Other.mp3;SPARK;accent;accélération/virage;toutes;adaptatif;active
+track_id;source_stem;character;role;movement;playback;status
+dubidubidu-test;Drum.mp3;PULSE;Drums;speed;continuous;used
+dubidubidu-test;Other.mp3;SPARK;Other / synths;acceleration + turn;continuous;used
+dubidubidu-test;Bass.mp3;BOUNCE;Bass;speed + energy + braking;continuous;used
+dubidubidu-test;Piano.mp3;KEYS;Piano / harmony;always;continuous;used
+dubidubidu-test;Vocal.mp3;VOICE;Vocals;always;continuous;used

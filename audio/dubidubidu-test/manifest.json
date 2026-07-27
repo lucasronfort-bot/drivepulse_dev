@@ -5,8 +5,11 @@
   "source_url": "",
   "bpm": 152.0,
   "bar_duration": 1.5789473684210527,
-  "loop_duration": 12.631578947368421,
-  "format": "AAC-LC 224 kb/s, 44.1 kHz, stereo; source stems MP3 128 kb/s",
+  "playback_mode": "continuous",
+  "track_duration": 226.220408,
+  "loop_duration": 226.220408,
+  "crossfade_duration": 0.75,
+  "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo — aucune recompression supplémentaire",
   "source_quality_note": "Stems probablement issus d’une séparation automatique ; résidus possibles entre les pistes.",
   "buses": [
     "rhythm",
@@ -76,66 +79,33 @@
     "harmony": 1.05,
     "lead": 1.08
   },
+  "continuous": {
+    "files": {
+      "rhythm": "audio/dubidubidu-test/full/rhythm.mp3",
+      "tops": "audio/dubidubidu-test/full/tops.mp3",
+      "bass": "audio/dubidubidu-test/full/bass.mp3",
+      "harmony": "audio/dubidubidu-test/full/harmony.mp3",
+      "lead": "audio/dubidubidu-test/full/lead.mp3"
+    }
+  },
   "scenes": {
     "intro": {
-      "start": 0.603719,
-      "files": {
-        "tops": "audio/dubidubidu-test/intro/tops.m4a",
-        "harmony": "audio/dubidubidu-test/intro/harmony.m4a",
-        "rhythm": "audio/dubidubidu-test/intro/rhythm.m4a",
-        "bass": "audio/dubidubidu-test/intro/bass.m4a",
-        "lead": "audio/dubidubidu-test/intro/lead.m4a"
-      }
+      "label": "Intro"
     },
     "groove": {
-      "start": 13.235298,
-      "files": {
-        "rhythm": "audio/dubidubidu-test/groove/rhythm.m4a",
-        "tops": "audio/dubidubidu-test/groove/tops.m4a",
-        "bass": "audio/dubidubidu-test/groove/bass.m4a",
-        "harmony": "audio/dubidubidu-test/groove/harmony.m4a",
-        "lead": "audio/dubidubidu-test/groove/lead.m4a"
-      }
+      "label": "Groove"
     },
     "drive": {
-      "start": 63.761614,
-      "files": {
-        "rhythm": "audio/dubidubidu-test/drive/rhythm.m4a",
-        "tops": "audio/dubidubidu-test/drive/tops.m4a",
-        "bass": "audio/dubidubidu-test/drive/bass.m4a",
-        "harmony": "audio/dubidubidu-test/drive/harmony.m4a",
-        "lead": "audio/dubidubidu-test/drive/lead.m4a"
-      }
+      "label": "Montée"
     },
     "breakdown": {
-      "start": 114.28793,
-      "files": {
-        "tops": "audio/dubidubidu-test/breakdown/tops.m4a",
-        "harmony": "audio/dubidubidu-test/breakdown/harmony.m4a",
-        "lead": "audio/dubidubidu-test/breakdown/lead.m4a",
-        "rhythm": "audio/dubidubidu-test/breakdown/rhythm.m4a",
-        "bass": "audio/dubidubidu-test/breakdown/bass.m4a"
-      }
+      "label": "Respiration"
     },
     "chorus": {
-      "start": 152.182666,
-      "files": {
-        "rhythm": "audio/dubidubidu-test/chorus/rhythm.m4a",
-        "tops": "audio/dubidubidu-test/chorus/tops.m4a",
-        "bass": "audio/dubidubidu-test/chorus/bass.m4a",
-        "harmony": "audio/dubidubidu-test/chorus/harmony.m4a",
-        "lead": "audio/dubidubidu-test/chorus/lead.m4a"
-      }
+      "label": "Refrain"
     },
     "finale": {
-      "start": 202.708982,
-      "files": {
-        "rhythm": "audio/dubidubidu-test/finale/rhythm.m4a",
-        "tops": "audio/dubidubidu-test/finale/tops.m4a",
-        "bass": "audio/dubidubidu-test/finale/bass.m4a",
-        "lead": "audio/dubidubidu-test/finale/lead.m4a",
-        "harmony": "audio/dubidubidu-test/finale/harmony.m4a"
-      }
+      "label": "Finale"
     }
   },
   "reaction_rules": {

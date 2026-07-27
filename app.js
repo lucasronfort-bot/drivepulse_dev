@@ -28,6 +28,8 @@ let BPM=120;
 let BEAT_DURATION=60/BPM;
 let BAR_DURATION=BEAT_DURATION*4;
 let LOOP_DURATION=BAR_DURATION*8;
+let TRACK_DURATION=LOOP_DURATION;
+let TRACK_CROSSFADE=.75;
 const SCHEDULE_AHEAD=.72;
 const ENGINE_INTERVAL=50;
 let speedRatio=0;
@@ -222,7 +224,7 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V8.9 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V9.0 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
  if(library.tracks.length){
@@ -257,6 +259,16 @@ function sceneKey(trackId,scene){
  return `${trackId}:${scene}`;
 }
 
+function isContinuousTrack(trackManifest=manifest){
+ return trackManifest?.playback_mode==="continuous";
+}
+
+function audioDataKey(trackId,scene="intro"){
+ const track=trackById(trackId);
+ const trackManifest=manifestCache.get(track?.manifest)||((trackId===currentTrackId)?manifest:null);
+ return sceneKey(trackId,isContinuousTrack(trackManifest)?"continuous":scene);
+}
+
 async function loadTrackManifest(trackId=currentTrackId){
  const track=trackById(trackId);
  if(!track)throw new Error("Morceau inconnu.");
@@ -272,7 +284,9 @@ function applyTrackTiming(trackManifest){
  BPM=finite(trackManifest.bpm)||120;
  BEAT_DURATION=60/BPM;
  BAR_DURATION=finite(trackManifest.bar_duration)||BEAT_DURATION*4;
- LOOP_DURATION=finite(trackManifest.loop_duration)||BAR_DURATION*8;
+ TRACK_DURATION=finite(trackManifest.track_duration)||finite(trackManifest.loop_duration)||BAR_DURATION*8;
+ LOOP_DURATION=trackManifest.playback_mode==="continuous"?TRACK_DURATION:(finite(trackManifest.loop_duration)||BAR_DURATION*8);
+ TRACK_CROSSFADE=clamp(finite(trackManifest.crossfade_duration)||.75,.15,2.5);
 }
 
 async function activateTrackMetadata(trackId){
@@ -425,20 +439,27 @@ function estimateBufferDb(buffer){
 }
 
 async function loadScene(name,trackId=currentTrackId){
- const key=sceneKey(trackId,name);
+ const trackManifest=await loadTrackManifest(trackId);
+ const key=audioDataKey(trackId,name);
  if(sceneCache.has(key)){
   sceneAccess.set(key,performance.now());
   return sceneCache.get(key);
  }
  if(sceneLoads.has(key))return sceneLoads.get(key);
  const promise=(async()=>{
-  const trackManifest=await loadTrackManifest(trackId);
-  const physicalName=physicalSceneName(name,trackId);
-  const scene=trackManifest.scenes[physicalName];
-  if(!scene)throw new Error(`Scène inconnue : ${name}`);
+  let files;
+  if(isContinuousTrack(trackManifest)){
+   files=trackManifest.continuous?.files;
+   if(!files)throw new Error("Fichiers continus introuvables.");
+  }else{
+   const physicalName=physicalSceneName(name,trackId);
+   const scene=trackManifest.scenes[physicalName];
+   if(!scene)throw new Error(`Scène inconnue : ${name}`);
+   files=scene.files;
+  }
   const data=new Map();
   await Promise.all(BUSES.map(async bus=>{
-   const url=scene.files[bus.id];
+   const url=files?.[bus.id];
    if(!url)return;
    const buffer=await decodeAudio(url);
    data.set(bus.id,{buffer,rmsDb:estimateBufferDb(buffer),url});
@@ -452,14 +473,13 @@ async function loadScene(name,trackId=currentTrackId){
  sceneLoads.set(key,promise);
  return promise;
 }
-
 function pruneSceneCache(){
  const protectedScenes=new Set([
-  sceneKey(currentTrackId,currentScene),
-  sceneKey(currentTrackId,targetScene),
-  pendingTransition?sceneKey(pendingTransition.trackId||currentTrackId,pendingTransition.scene):null,
-  nextLoopGroup?sceneKey(nextLoopGroup.trackId||currentTrackId,nextLoopGroup.scene):null,
-  pendingTrackSwitch?sceneKey(pendingTrackSwitch.trackId,"intro"):null
+  audioDataKey(currentTrackId,currentScene),
+  audioDataKey(currentTrackId,targetScene),
+  pendingTransition?audioDataKey(pendingTransition.trackId||currentTrackId,pendingTransition.scene):null,
+  nextLoopGroup?audioDataKey(nextLoopGroup.trackId||currentTrackId,nextLoopGroup.scene):null,
+  pendingTrackSwitch?audioDataKey(pendingTrackSwitch.trackId,"intro"):null
  ].filter(Boolean));
  const candidates=[...sceneCache.keys()].filter(key=>!protectedScenes.has(key));
  while(sceneCache.size>6&&candidates.length){
@@ -469,29 +489,33 @@ function pruneSceneCache(){
   sceneAccess.delete(oldest);
  }
 }
-
 async function prefetchAllAudio(trackId=currentTrackId){
  const trackManifest=await loadTrackManifest(trackId);
  const urls=[];
- Object.values(trackManifest.scenes).forEach(scene=>Object.values(scene.files).forEach(url=>urls.push(url)));
+ if(isContinuousTrack(trackManifest)){
+  Object.values(trackManifest.continuous?.files||{}).forEach(url=>urls.push(url));
+ }else{
+  Object.values(trackManifest.scenes||{}).forEach(scene=>Object.values(scene.files||{}).forEach(url=>urls.push(url)));
+ }
  for(const url of [...new Set(urls)]){
   if(!running)return;
   try{await fetch(url,{cache:"force-cache"});}catch{}
  }
 }
-
 function sceneSignal(scene,bus,trackId=currentTrackId){
- const db=sceneCache.get(sceneKey(trackId,scene))?.get(bus)?.rmsDb??-120;
+ const db=sceneCache.get(audioDataKey(trackId,scene))?.get(bus)?.rmsDb??-120;
  return db>-68?1:0;
 }
 
 function startSceneGroup(scene,when,offset=0,fadeIn=.055,trackId=currentTrackId){
- const data=sceneCache.get(sceneKey(trackId,scene));
+ const data=sceneCache.get(audioDataKey(trackId,scene));
  if(!data)return null;
  const track=trackById(trackId);
  const trackManifest=manifestCache.get(track?.manifest)||manifest;
- const loopDuration=finite(trackManifest?.loop_duration)||LOOP_DURATION;
- const duration=Math.max(.05,loopDuration-offset);
+ const sourceDuration=isContinuousTrack(trackManifest)
+  ?(finite(trackManifest?.track_duration)||TRACK_DURATION)
+  :(finite(trackManifest?.loop_duration)||LOOP_DURATION);
+ const duration=Math.max(.05,sourceDuration-offset);
  const group={scene,trackId,when,offset,end:when+duration,sources:[],sourceGains:[],stopped:false};
  BUSES.forEach(bus=>{
   const entry=data.get(bus.id);
@@ -594,7 +618,7 @@ async function requestTrackSwitch(trackId,reason="manual"){
    candidateSince=performance.now();
    activeGroup=item.group;
    currentPhaseStart=item.when;
-   nextLoopTime=item.when+LOOP_DURATION;
+   nextLoopTime=item.when+(isContinuousTrack(manifest)?Math.max(1,TRACK_DURATION-TRACK_CROSSFADE):LOOP_DURATION);
    pendingTrackSwitch=null;
    trackStartedAt=performance.now();
 
@@ -640,10 +664,25 @@ function commitSceneAt(scene,group,phaseStart){
 
 function scheduleTransitionIfReady(){
  if(!running||pendingTrackSwitch||fixedMixMode&&targetScene!=="chorus")return;
- if(targetScene===currentScene||pendingTransition||!sceneCache.has(sceneKey(currentTrackId,targetScene)))return;
+ if(targetScene===currentScene||pendingTransition)return;
  const now=audioCtx.currentTime;
  const boundary=nextGridTime(BAR_DURATION,now+.12);
 
+ if(isContinuousTrack()){
+  const transitionScene=targetScene;
+  const token={scene:transitionScene,trackId:currentTrackId,when:boundary,labelOnly:true};
+  pendingTransition=token;
+  setTimeout(()=>{
+   if(!running||pendingTransition!==token)return;
+   currentScene=transitionScene;
+   pendingTransition=null;
+   updateSectionTimeline();
+   applyBusMix(true);
+  },Math.max(0,(boundary-audioCtx.currentTime)*1000));
+  return;
+ }
+
+ if(!sceneCache.has(audioDataKey(currentTrackId,targetScene)))return;
  if(boundary>=nextLoopTime-.045){
   if(nextLoopGroup&&nextLoopGroup.scene!==targetScene&&now<nextLoopGroup.when-.035){
    cancelFutureGroup(nextLoopGroup.group);
@@ -657,7 +696,7 @@ function scheduleTransitionIfReady(){
  const group=startSceneGroup(transitionScene,boundary,offset,.065);
  if(!group)return;
  fadeOutGroup(activeGroup,boundary,.065);
- pendingTransition={scene:transitionScene,when:boundary,offset,group};
+ pendingTransition={scene:transitionScene,trackId:currentTrackId,when:boundary,offset,group};
  setTimeout(()=>{
   if(!running||pendingTransition?.group!==group)return;
   commitSceneAt(transitionScene,group,boundary-offset);
@@ -665,12 +704,30 @@ function scheduleTransitionIfReady(){
   applyBusMix(true);
  },Math.max(0,(boundary-audioCtx.currentTime)*1000));
 }
-
 function scheduler(){
  if(!running||!audioCtx)return;
  const now=audioCtx.currentTime;
  if(pendingTrackSwitch)return;
  scheduleTransitionIfReady();
+
+ if(isContinuousTrack()){
+  if(nextLoopGroup&&now>=nextLoopGroup.when-.012){
+   const item=nextLoopGroup;
+   nextLoopGroup=null;
+   activeGroup=item.group;
+   currentPhaseStart=item.when;
+   nextLoopTime=item.when+Math.max(1,TRACK_DURATION-TRACK_CROSSFADE);
+   applyBusMix(true);
+  }
+  if(!nextLoopGroup&&nextLoopTime<now+SCHEDULE_AHEAD){
+   const group=startSceneGroup(currentScene,nextLoopTime,0,TRACK_CROSSFADE);
+   if(group){
+    fadeOutGroup(activeGroup,nextLoopTime,TRACK_CROSSFADE);
+    nextLoopGroup={scene:currentScene,trackId:currentTrackId,when:nextLoopTime,group};
+   }
+  }
+  return;
+ }
 
  if(nextLoopGroup&&now>=nextLoopGroup.when-.012){
   const item=nextLoopGroup;
@@ -682,21 +739,25 @@ function scheduler(){
 
  if(!nextLoopGroup&&nextLoopTime<now+SCHEDULE_AHEAD){
   let scene=currentScene;
-  if(sceneCache.has(sceneKey(currentTrackId,targetScene)))scene=targetScene;
+  if(sceneCache.has(audioDataKey(currentTrackId,targetScene)))scene=targetScene;
   if(pendingTransition)scene=pendingTransition.scene;
   const group=startSceneGroup(scene,nextLoopTime,0,.012);
   if(group)nextLoopGroup={scene,trackId:currentTrackId,when:nextLoopTime,group};
  }
 }
-
 function requestTargetScene(name){
  const physicalName=physicalSceneName(name,currentTrackId);
  if(!manifest?.scenes?.[physicalName])return;
  targetScene=name;
+ if(isContinuousTrack()){
+  scheduleTransitionIfReady();
+  return;
+ }
  loadScene(name,currentTrackId).then(()=>scheduleTransitionIfReady()).catch(error=>setStatus(error.message||"Chargement audio impossible."));
 }
 
 function warmLikelyScenes(){
+ if(isContinuousTrack())return;
  const choices={intro:["groove"],groove:["drive","breakdown"],drive:["chorus","breakdown"],breakdown:["groove","drive"],chorus:["finale","breakdown"],finale:["breakdown","groove"]}[currentScene]||[];
  choices.slice(0,2).forEach(name=>loadScene(name).catch(()=>{}));
 }
@@ -1144,7 +1205,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v8-9-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v9-0-continuous-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1155,7 +1216,7 @@ async function start(){
   return;
  }
  try{
-  generation++;setStatus("Chargement des six bus audio AAC 256 kb/s…");
+  generation++;setStatus("Chargement des cinq stems complets synchronisés…");
   createAudioGraph();
   const resumePromise=audioCtx.resume();
   const permissionPromise=requestMotionPermission();
@@ -1171,7 +1232,7 @@ async function start(){
   resetAutoTrackDeadline();
   const startAt=audioCtx.currentTime+.28;
   activeGroup=startSceneGroup("intro",startAt,0,.025);
-  currentPhaseStart=startAt;nextLoopTime=startAt+LOOP_DURATION;
+  currentPhaseStart=startAt;nextLoopTime=startAt+(isContinuousTrack()?Math.max(1,TRACK_DURATION-TRACK_CROSSFADE):LOOP_DURATION);
   schedulerTimer=setInterval(scheduler,40);updateTimer=setInterval(updateEngine,ENGINE_INTERVAL);
   if(motionGranted)window.addEventListener("devicemotion",handleMotion,{passive:true});
   startGps();
@@ -1179,9 +1240,9 @@ async function start(){
 
   ui.start.disabled=true;ui.calibrate.disabled=!motionGranted;ui.stop.disabled=false;ui.demo.disabled=false;ui.journey.disabled=false;
   ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(motionGranted?(sensorCalibration.calibrated?"V8.9 active : bibliothèque multi-morceaux et calibration 3D prêtes.":"V8.9 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles.");
+  setStatus(motionGranted?(sensorCalibration.calibrated?"V9.0 active : lecture continue et calibration 3D prêtes.":"V9.0 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles.");
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V8.9.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.0.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1223,7 +1284,7 @@ loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V8.9 : nouvelles règles PULSE, SPARK, BOUNCE, KEYS et VOICE actives.");
+   setStatus("Prêt — V9.0 : lecture continue du morceau complet, sans boucle de huit mesures.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");

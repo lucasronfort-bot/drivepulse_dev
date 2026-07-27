@@ -1,7 +1,5 @@
-# Bibliothèque musicale V8.9
+# Bibliothèque musicale V9.0
 
-Un seul morceau de test privé est installé : `Dubidubidu — Private Drive Test`.
+Un seul titre de test local est installé : Dubidubidu — Continuous Drive Test.
 
-Son manifeste se trouve dans :
-
-`audio/dubidubidu-test/manifest.json`
+Le manifeste utilise `playback_mode: continuous` et une section `continuous.files`. Tous les stems doivent avoir le même point de départ et la même durée.

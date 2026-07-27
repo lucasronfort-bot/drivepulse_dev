@@ -1,6 +1,3 @@
-# Dossier audio DrivePulse
+# Audio V9.0
 
-La bibliothèque est volontairement vide.
-
-Chaque futur morceau disposera de son propre dossier, de ses stems adaptés et d'un fichier `manifest.json`.
-Les titres retirés de la V8.9 ne sont plus distribués dans ce projet.
+Le dossier `dubidubidu-test/full` contient les cinq stems complets de test. Ils sont lus simultanément du début à la fin, sans découpage en scènes.
