@@ -38,6 +38,11 @@ let speedRatio=0;
 
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
 const lowPass=(oldValue,newValue,amount=.12)=>oldValue+amount*(newValue-oldValue);
+const followEnvelope=(current,target,dt,attack=.08,release=.55)=>{
+ const tau=target>current?attack:release;
+ const amount=1-Math.exp(-Math.max(.001,dt)/Math.max(.01,tau));
+ return lowPass(current,target,amount);
+};
 const smoothstep=(edge0,edge1,value)=>{
  const x=clamp((value-edge0)/(edge1-edge0));
  return x*x*(3-2*x);
@@ -144,7 +149,22 @@ let speedKmh=0;
 let gpsSpeedMs=0;
 let gpsAcceleration=0;
 let gpsHeadingRate=0;
+let rawGpsAcceleration=0;
+let lastGpsUpdateAt=0;
 let smoothed={accel:0,brake:0,turn:0};
+let fastImuAccel=0;
+let slowGpsAccel=0;
+let accelerationTarget=0;
+let fastImuBrake=0;
+let slowGpsBrake=0;
+let imuLongitudinalBias=0;
+let imuLongitudinalCorrected=0;
+let imuLongitudinalFast=0;
+let lastMotionAt=performance.now();
+let turnImuEvidence=0;
+let turnGyroEvidence=0;
+let turnGpsEvidence=0;
+let turnConfidence=0;
 let rawMotion=vec();
 let linearMotion=vec();
 let imuLongitudinal=0;
@@ -257,7 +277,7 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V9.6.1 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V9.7 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
  localStorage.removeItem("drivepulse-auto-track");
@@ -405,9 +425,9 @@ function currentSwirlConfig(){
   enabled:config.enabled!==false,
   wetGain:clamp(finite(config.wet_gain)||.46,0,.8),
   stemGain:clamp(finite(config.stem_gain)||.72,0,1),
-  attack:clamp(finite(config.attack_seconds)||.24,.05,1.5),
-  hold:clamp(finite(config.hold_seconds)||.65,0,3),
-  release:clamp(finite(config.release_seconds)||2.4,.4,8),
+  attack:clamp(finite(config.attack_seconds)||.18,.05,1.5),
+  hold:clamp(finite(config.hold_seconds)||.35,0,3),
+  release:clamp(finite(config.release_seconds)||1.55,.4,8),
   sendWeights:{...DEFAULT_SWIRL_SEND_WEIGHTS,...(config.send_weights||{})}
  };
 }
@@ -926,15 +946,15 @@ function busBehaviorLevel(behavior){
    return clamp(smoothstep(.05,.58,accel)*.74,0,.74);
   case "spark_always_accel":
    // SPARK reste audible en permanence et reçoit un renfort progressif à l'accélération.
-   return clamp(.58+smoothstep(.05,.58,accel)*.24,.58,.82);
+   return clamp(.58+smoothstep(.03,.72,accel)*.28,.58,.86);
   case "spark_accel_turn":
    // Compatibilité avec les anciens manifestes.
    return clamp(Math.max(smoothstep(.05,.55,accel)*.74,smoothstep(.05,.55,turn)*.74),0,.74);
   case "bounce_speed_accel":{
    // BOUNCE construit le poids du morceau avec la vitesse ; l’accélération ajoute un boost court.
-   const base=smoothstep(.12,.94,speedIntensity)*.76;
-   const boost=smoothstep(.05,.62,accel)*.24;
-   return clamp(base+boost,0,.92);
+   const base=smoothstep(.10,.94,speedIntensity)*.76;
+   const boost=smoothstep(.03,.76,accel)*.30;
+   return clamp(base+boost,0,.95);
   }
   case "bounce_speed_energy_brake":
    // Compatibilité avec les anciens manifestes.
@@ -1138,6 +1158,11 @@ function updateDesktopSimulation(){
  speedKmh=desktopState.speed;
  gpsSpeedMs=speedKmh/3.6;
  gpsAcceleration=acceleration*2.25-braking*3.4;
+ rawGpsAcceleration=gpsAcceleration;
+ lastGpsUpdateAt=performance.now();
+ fastImuAccel=acceleration;slowGpsAccel=acceleration;accelerationTarget=acceleration;
+ fastImuBrake=braking;slowGpsBrake=braking;
+ turnImuEvidence=Math.abs(steering);turnGyroEvidence=Math.abs(steering);turnGpsEvidence=Math.abs(steering);turnConfidence=Math.abs(steering);
  gpsHeadingRate=Math.abs(steering)*38;
  imuLongitudinal=gpsAcceleration;
  imuLateral=steering*2.5;
@@ -1167,9 +1192,9 @@ function updateDrivingMemory(){
  const stable=speedKmh>8&&speedDelta<2.4&&smoothed.accel<.18&&smoothed.brake<.18?1:0;
  stableSpeedMemory=lowPass(stableSpeedMemory,stable,Math.min(.25,dt*.15));
  const swirlConfig=currentSwirlConfig();
- const turnTarget=clamp(smoothstep(.07,.58,smoothed.turn)*(.58+.42*smoothstep(.04,.92,speedIntensity)));
- if(turnTarget>swirlEnvelope+.015)swirlHoldUntil=now+swirlConfig.hold*1000;
- const heldTarget=now<swirlHoldUntil?Math.max(turnTarget,swirlEnvelope*.985):turnTarget;
+ const turnTarget=clamp(smoothstep(.18,.68,smoothed.turn)*(.48+.52*smoothstep(.08,.92,speedIntensity)));
+ if(turnTarget>swirlEnvelope+.04)swirlHoldUntil=now+swirlConfig.hold*1000;
+ const heldTarget=now<swirlHoldUntil?Math.max(turnTarget,swirlEnvelope*.94):turnTarget;
  const tau=heldTarget>swirlEnvelope?swirlConfig.attack:swirlConfig.release;
  const swirlAmount=1-Math.exp(-dt/Math.max(.01,tau));
  swirlEnvelope=lowPass(swirlEnvelope,heldTarget,swirlAmount);
@@ -1269,10 +1294,11 @@ function maybeLogSensors(){
  lastLogAt=now;
  sensorLog.push({
   iso:new Date().toISOString(),elapsed_ms:Math.round(now),track_id:currentTrackId,input_mode:desktopSimActive?"desktop":"sensors",road_mode:roadMode,scene:currentScene,target_scene:targetScene,
-  speed_kmh:speedKmh.toFixed(2),gps_accel_ms2:gpsAcceleration.toFixed(3),gps_heading_rate_dps:gpsHeadingRate.toFixed(3),
+  speed_kmh:speedKmh.toFixed(2),gps_accel_raw_ms2:rawGpsAcceleration.toFixed(3),gps_accel_ms2:gpsAcceleration.toFixed(3),gps_age_ms:Math.round(Math.max(0,performance.now()-lastGpsUpdateAt)),gps_heading_rate_dps:gpsHeadingRate.toFixed(3),
   motion_x:rawMotion.x.toFixed(4),motion_y:rawMotion.y.toFixed(4),motion_z:rawMotion.z.toFixed(4),
-  imu_longitudinal:imuLongitudinal.toFixed(4),imu_lateral:imuLateral.toFixed(4),yaw_rate_dps:verticalYawRate.toFixed(3),
-  accel_signal:smoothed.accel.toFixed(4),brake_signal:smoothed.brake.toFixed(4),turn_signal:smoothed.turn.toFixed(4),turn_signed:signedTurn.toFixed(4),swirl_level:swirlEnvelope.toFixed(4),pedals_linked:desktopSimActive&&ui.simLinkPedals.checked?1:0,
+  imu_longitudinal:imuLongitudinal.toFixed(4),imu_longitudinal_corrected:imuLongitudinalCorrected.toFixed(4),imu_longitudinal_filtered:imuLongitudinalFast.toFixed(4),imu_lateral:imuLateral.toFixed(4),yaw_rate_dps:verticalYawRate.toFixed(3),
+  imu_accel_fast:fastImuAccel.toFixed(4),gps_accel_slow:slowGpsAccel.toFixed(4),accel_target:accelerationTarget.toFixed(4),accel_signal:smoothed.accel.toFixed(4),
+  brake_signal:smoothed.brake.toFixed(4),turn_imu_evidence:turnImuEvidence.toFixed(4),turn_gyro_evidence:turnGyroEvidence.toFixed(4),turn_gps_evidence:turnGpsEvidence.toFixed(4),turn_confidence:turnConfidence.toFixed(4),turn_signal:smoothed.turn.toFixed(4),turn_signed:signedTurn.toFixed(4),swirl_level:swirlEnvelope.toFixed(4),pedals_linked:desktopSimActive&&ui.simLinkPedals.checked?1:0,
   energy:energy.toFixed(4),speed_ratio:speedRatio.toFixed(4),
   rhythm_level:(busRequestedLevels.get("rhythm")||0).toFixed(4),tops_level:(busRequestedLevels.get("tops")||0).toFixed(4),
   bass_level:(busRequestedLevels.get("bass")||0).toFixed(4),harmony_level:(busRequestedLevels.get("harmony")||0).toFixed(4),
@@ -1331,6 +1357,8 @@ function handleMotion(event){
  if(!running||desktopSimActive||demoTimer||journeyTimer)return;
  motionEventCount++;
  const now=performance.now();
+ const dt=clamp((now-lastMotionAt)/1000,.005,.20);
+ lastMotionAt=now;
  if(now-motionFrequencyWindow>=1000){
   motionFrequency=motionEventCount*1000/(now-motionFrequencyWindow);
   motionEventCount=0;motionFrequencyWindow=now;
@@ -1368,26 +1396,60 @@ function handleMotion(event){
   }
  }
 
+ // Le biais lent absorbe les petites erreurs d’orientation et les pentes sans retarder les impulsions réelles.
+ const quietForBias=Math.abs(gpsAcceleration)<.10&&verticalYawRate<5&&Math.abs(imuLateral)<.45&&Math.abs(imuLongitudinal-imuLongitudinalBias)<.75;
+ if(quietForBias){
+  const biasAmount=1-Math.exp(-dt/8);
+  imuLongitudinalBias=lowPass(imuLongitudinalBias,imuLongitudinal,biasAmount);
+ }
+ imuLongitudinalCorrected=imuLongitudinal-imuLongitudinalBias;
+ // Filtre court (environ 160 ms) : conserve l’attaque d’une accélération, rejette une partie des vibrations de route.
+ imuLongitudinalFast=followEnvelope(imuLongitudinalFast,imuLongitudinalCorrected,dt,.055,.16);
+
  const accelSensitivity=Number(ui.accelSensitivity.value);
  const turnSensitivity=Number(ui.turnSensitivity.value);
- const imuPositive=Math.max(0,imuLongitudinal)/2.25;
- const imuNegative=Math.max(0,-imuLongitudinal)/2.25;
- const gpsPositive=Math.max(0,gpsAcceleration)/2.0;
- const gpsNegative=Math.max(0,-gpsAcceleration)/2.2;
- const accelerationTarget=clamp(Math.max(
-  gpsPositive*.94,
-  imuPositive*.28+gpsPositive*.58,
-  imuPositive*.23
- )*accelSensitivity);
- const brakeTarget=clamp(Math.max(imuNegative*.68+gpsNegative*.32,gpsNegative*.84)*accelSensitivity);
- const turnTarget=clamp(Math.max(Math.abs(imuLateral)/2.5*.72,verticalYawRate/45*.68,gpsHeadingRate/34*.82)*turnSensitivity);
- smoothed.accel=lowPass(smoothed.accel,accelerationTarget,.24);
- smoothed.brake=lowPass(smoothed.brake,brakeTarget,.24);
- smoothed.turn=lowPass(smoothed.turn,turnTarget,.23);
- const directionSource=Math.abs(imuLateral)>.10?Math.sign(imuLateral):(Math.abs(verticalYawSigned)>2?Math.sign(verticalYawSigned):Math.sign(gpsHeadingRateSigned));
- signedTurn=lowPass(signedTurn,directionSource*turnTarget,.22);
-}
+ const gpsAge=Math.max(0,now-lastGpsUpdateAt);
+ const gpsFreshness=Math.exp(-gpsAge/1700);
 
+ // Accélération : IMU 60 Hz prioritaire pour l’attaque, GPS lent uniquement pour confirmer et maintenir.
+ const motionMagnitude=Math.max(.15,length(linearMotion));
+ const longitudinalPurity=smoothstep(.35,.82,Math.abs(imuLongitudinalFast)/motionMagnitude);
+ const imuAccelTarget=smoothstep(.15,1.90,Math.max(0,imuLongitudinalFast))*(.15+.85*longitudinalPurity);
+ const gpsAccelTarget=smoothstep(.04,1.55,Math.max(0,gpsAcceleration)*gpsFreshness);
+ fastImuAccel=followEnvelope(fastImuAccel,imuAccelTarget,dt,.040,.18);
+ slowGpsAccel=followEnvelope(slowGpsAccel,gpsAccelTarget,dt,.16,.85);
+ accelerationTarget=clamp(Math.max(
+  fastImuAccel*.90,
+  slowGpsAccel*.82,
+  fastImuAccel*.58+slowGpsAccel*.30
+ )*accelSensitivity);
+ smoothed.accel=followEnvelope(smoothed.accel,accelerationTarget,dt,.060,.35);
+
+ // Freinage : même principe, avec une attaque rapide mais légèrement plus filtrée.
+ const imuBrakeTarget=smoothstep(.06,1.55,Math.max(0,-imuLongitudinalCorrected));
+ const gpsBrakeTarget=smoothstep(.04,1.85,Math.max(0,-gpsAcceleration)*gpsFreshness);
+ fastImuBrake=followEnvelope(fastImuBrake,imuBrakeTarget,dt,.055,.34);
+ slowGpsBrake=followEnvelope(slowGpsBrake,gpsBrakeTarget,dt,.18,.80);
+ const brakeTarget=clamp(Math.max(fastImuBrake*.90,slowGpsBrake*.86,fastImuBrake*.62+slowGpsBrake*.42)*accelSensitivity);
+ smoothed.brake=followEnvelope(smoothed.brake,brakeTarget,dt,.075,.56);
+
+ // Virages : le gyroscope ou le changement de cap doivent valider l’accélération latérale.
+ const imuTurnTarget=smoothstep(.35,2.40,Math.abs(imuLateral));
+ const gyroTurnTarget=smoothstep(5.5,36,verticalYawRate);
+ const gpsTurnTarget=smoothstep(3.5,26,gpsHeadingRate*gpsFreshness);
+ turnImuEvidence=followEnvelope(turnImuEvidence,imuTurnTarget,dt,.07,.32);
+ turnGyroEvidence=followEnvelope(turnGyroEvidence,gyroTurnTarget,dt,.07,.36);
+ turnGpsEvidence=followEnvelope(turnGpsEvidence,gpsTurnTarget,dt,.15,.75);
+ turnConfidence=clamp(Math.max(
+  turnGyroEvidence*.72+Math.max(turnImuEvidence,turnGpsEvidence)*.28,
+  turnGpsEvidence*.70+turnImuEvidence*.25,
+  Math.min(turnGyroEvidence,turnGpsEvidence)*1.08
+ )*turnSensitivity);
+ smoothed.turn=followEnvelope(smoothed.turn,turnConfidence,dt,.10,.42);
+
+ const directionSource=turnGyroEvidence>.12?Math.sign(verticalYawSigned):(turnGpsEvidence>.12?Math.sign(gpsHeadingRateSigned):Math.sign(imuLateral));
+ signedTurn=followEnvelope(signedTurn,directionSource*smoothed.turn,dt,.10,.48);
+}
 function beginCalibration(){
  if(calibration.phase!=="idle")return;
  calibration={phase:"stationary",stationary:[],drive:[],driveWeights:[],timer:null};
@@ -1455,9 +1517,10 @@ function startGps(){
   const speed=coords.speed!=null&&Number.isFinite(coords.speed)?Math.max(0,coords.speed):gpsSpeedMs;
   if(lastGps.timestamp&&lastGps.speed!=null){
    const dt=Math.max(.2,Math.min(5,(timestamp-lastGps.timestamp)/1000));
-   const rawAcceleration=clamp((speed-lastGps.speed)/dt,-4,4);
-   gpsAcceleration=lowPass(gpsAcceleration,rawAcceleration,.34);
-  }
+   rawGpsAcceleration=clamp((speed-lastGps.speed)/dt,-4,4);
+   gpsAcceleration=lowPass(gpsAcceleration,rawGpsAcceleration,.48);
+  }else rawGpsAcceleration=0;
+  lastGpsUpdateAt=performance.now();
   gpsSpeedMs=speed;
   speedKmh=lowPass(speedKmh,speed*3.6,.42);
 
@@ -1530,7 +1593,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v9-6-1-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v9-7-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1565,9 +1628,9 @@ async function start(){
 
   ui.start.disabled=true;ui.calibrate.disabled=desktopSimActive||!motionGranted;ui.stop.disabled=false;if(ui.demo)ui.demo.disabled=false;if(ui.journey)ui.journey.disabled=false;
   if(ui.quality)ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(desktopSimActive?"V9.6.1 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.6.1 active : lecture continue et calibration 3D prêtes.":"V9.6.1 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
+  setStatus(desktopSimActive?"V9.7 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.7 active : lecture continue et calibration 3D prêtes.":"V9.7 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.6.1.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.7.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1583,6 +1646,9 @@ function stop(updateStatus=true){
  audioCtx=masterGain=masterFilter=masterCompressor=swirlInput=swirlReturnGain=swirlPanner=swirlDelay=swirlFeedback=swirlStemGain=null;
  swirlSendNodes.clear();busNodes.clear();sceneCache.clear();sceneLoads.clear();sceneAccess.clear();activeGroup=pendingTransition=nextLoopGroup=pendingTrackSwitch=null;clearPreparedEndTrack();
  swirlEnvelope=0;swirlHoldUntil=0;signedTurn=0;
+ fastImuAccel=slowGpsAccel=accelerationTarget=fastImuBrake=slowGpsBrake=0;
+ turnImuEvidence=turnGyroEvidence=turnGpsEvidence=turnConfidence=0;
+ imuLongitudinalBias=imuLongitudinalCorrected=imuLongitudinalFast=0;lastMotionAt=performance.now();
  BUSES.forEach(bus=>setAgentVisualState(bus.id,"inactive"));
  setAgentVisualState("swirl","inactive");
  if(sensorLogging){sensorLogging=false;ui.record.textContent="Enregistrer capteurs";}
@@ -1602,8 +1668,8 @@ function applyRoadMode(mode){
 
 const HELP_CONTENT={
  responsiveness:{title:"Réactivité musicale",text:"Les volumes réagissent désormais immédiatement, au prochain temps ou à la prochaine mesure. Ce réglage agit surtout sur la durée de validation avant un changement de scène.",recommendation:"Conseil : 1,0. Monte vers 1,3 si les scènes changent encore trop lentement."},
- accelSensitivity:{title:"Sensibilité accélération",text:"Amplifie la fusion entre l’accélération 3D du téléphone et la variation de vitesse GPS.",recommendation:"Conseil : commence à 1,0 après la calibration 3D."},
- turnSensitivity:{title:"Sensibilité virage",text:"Combine l’accélération latérale, la rotation verticale et le changement de cap GPS pour piloter SWIRL, le bus de reverb et delay spatial.",recommendation:"Conseil : 1,0 ; baisse si SWIRL s’ouvre sur les bosses ou les petites corrections de volant."}
+ accelSensitivity:{title:"Sensibilité accélération",text:"Amplifie la fusion V9.7 : l’IMU du téléphone déclenche l’effet immédiatement à environ 60 Hz, puis le GPS confirme et prolonge l’accélération sans bloquer l’attaque.",recommendation:"Conseil : commence à 1,0 après la calibration 3D ; 1,15 donne un effet plus démonstratif."},
+ turnSensitivity:{title:"Sensibilité virage",text:"SWIRL exige maintenant une validation par le gyroscope ou le changement de cap GPS. L’accélération latérale sert de renfort, mais ne peut plus ouvrir seule l’effet sur une bosse.",recommendation:"Conseil : 1,0 ; monte vers 1,15 uniquement si les vrais virages restent trop discrets."}
 };
 function openHelp(key){const item=HELP_CONTENT[key];if(!item)return;ui.helpTitle.textContent=item.title;ui.helpText.textContent=item.text;ui.helpRecommendation.textContent=item.recommendation;ui.helpModal.hidden=false;}
 function closeHelp(){ui.helpModal.hidden=true;}
@@ -1614,7 +1680,7 @@ loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V9.6.1 : simulateur ordinateur activé par défaut.");
+   setStatus("Prêt — V9.7 : simulateur ordinateur activé par défaut.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");
@@ -1658,4 +1724,4 @@ document.addEventListener("keyup",event=>{
  event.preventDefault();
 });
 [ui.responsiveness,ui.accelSensitivity,ui.turnSensitivity].forEach(input=>input.addEventListener("input",updateSettingValues));
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.6"));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.7"));

@@ -1,14 +1,15 @@
-DrivePulse V9.6.1 — Correctif SPARK
+DrivePulse V9.7 — correctif GitHub sans fichiers audio
 
-Remplacer dans GitHub les fichiers présents dans ce dossier en conservant exactement leur arborescence.
-Aucun fichier MP3 n’est à renvoyer.
-
-Fichiers :
+À remplacer à la racine :
 - app.js
 - index.html
+- style.css
 - sw.js
-- audio/dubidubidu-test/manifest.json
-- audio/shania-impress-remix-test/manifest.json
-- audio/unsteady-justin-caruso-test/manifest.json
+- manifest.webmanifest
 
-Après publication GitHub Pages, fermer complètement l’ancienne PWA/page puis la rouvrir. Si l’ancienne version persiste, supprimer les données du site ou désinstaller/réinstaller la PWA.
+À remplacer dans audio :
+- audio/library.json
+- les 14 fichiers audio/<morceau>/manifest.json
+
+Les fichiers MP3 et FLAC ne changent pas.
+Après déploiement, fermer complètement la PWA puis la rouvrir afin de vider l’ancien service worker.

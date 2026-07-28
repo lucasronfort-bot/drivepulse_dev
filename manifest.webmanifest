@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V9.5",
-  "short_name": "DrivePulse",
+  "name": "DrivePulse V9.7",
+  "short_name": "DrivePulse 9.7",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "Simulateur DrivePulse avec bibliothèque séquentielle de 14 morceaux continus."
+  "description": "DrivePulse avec bibliothèque de 14 morceaux, PULSE/BOUNCE liés à la vitesse et effet SWIRL dans les virages."
 }

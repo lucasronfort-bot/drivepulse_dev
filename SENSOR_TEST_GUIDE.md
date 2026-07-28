@@ -1,48 +1,20 @@
-# Guide d’essai en voiture — DrivePulse V8.3
+# Guide de test capteurs — DrivePulse V9.7
 
-## Avant de partir
+## Calibration
 
-1. Fixer rigidement l’iPhone, sans possibilité de rotation.
-2. Ouvrir DrivePulse et appuyer sur `Démarrer`.
-3. Appuyer sur `Calibration 3D`.
-4. Garder la voiture immobile pendant la première étape.
-5. À l’étape 2, accélérer doucement en ligne droite pendant environ six secondes.
-6. Attendre le message confirmant la fin de la calibration.
+1. Fixer fermement l’iPhone dans la voiture.
+2. Lancer DrivePulse et désactiver le simulateur PC.
+3. Effectuer la calibration 3D : immobile, puis accélération douce en ligne droite.
+4. Ne plus déplacer le téléphone pendant le trajet.
 
-La manipulation doit être réalisée par un passager ou dans des conditions sûres.
+## Test accélération
 
-## Essai qualité
+Effectuer plusieurs accélérations progressives puis franches. La jauge Accélération et le renfort de BOUNCE doivent commencer à réagir presque immédiatement, avant la mise à jour GPS.
 
-Appuyer sur `Mix fixe A/B` pendant une portion de route stable.
+## Test SWIRL
 
-- si le mix fixe est propre mais l’adaptatif ne l’est pas, noter les moments où la qualité se dégrade ;
-- si le mix fixe est également mauvais, vérifier le Bluetooth, l’égaliseur du véhicule et le volume de sortie.
+Comparer une ligne droite bosselée, de petites corrections de volant et de vrais virages. SWIRL doit rester sec sur les bosses et s’ouvrir surtout lorsque le gyroscope ou le cap GPS confirme une rotation.
 
-## Essai des capteurs
+## Journal CSV V9.7
 
-Appuyer sur `Enregistrer capteurs`, puis réaliser séparément :
-
-1. une accélération douce en ligne droite ;
-2. une accélération plus franche ;
-3. un freinage doux ;
-4. un virage à gauche ;
-5. un virage à droite ;
-6. une ligne droite à vitesse stable.
-
-Arrêter l’enregistrement puis appuyer sur `Télécharger CSV`.
-
-## Résultat attendu
-
-- accélération : `Accélération` monte, `Virage` reste faible ;
-- freinage : `Freinage` monte rapidement ;
-- virage gauche et droite : `Virage` monte dans les deux directions ;
-- ligne droite stable : les trois signaux retombent progressivement.
-
-
-## Vérifications spécifiques V8.3
-
-- vérifier que le piano disparaît progressivement entre 26 et 34 km/h ;
-- vérifier que Harmony reste audible sans donner l'impression d'un piano doublé ;
-- faire plusieurs accélérations progressives et franches ;
-- rester à 45–50 km/h pendant au moins une minute afin de confirmer que le refrain ne reste pas actif en permanence ;
-- comparer les nouvelles colonnes `rhythm_level`, `tops_level`, `bass_level`, `harmony_level`, `piano_level`, `lead_level` et `fx_level`.
+Les colonnes `imu_accel_fast`, `gps_accel_slow`, `accel_target` et `accel_signal` permettent de mesurer la chaîne d’accélération. Les colonnes `turn_imu_evidence`, `turn_gyro_evidence`, `turn_gps_evidence` et `turn_confidence` permettent d’identifier la source d’un déclenchement SWIRL.

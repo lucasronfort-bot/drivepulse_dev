@@ -1,117 +1,161 @@
-# Comportement des stems — bibliothèque V9.5
+# Comportement des stems — DrivePulse V9.7
 
-Les cinq stems démarrent ensemble à 00:00 et jouent continuellement jusqu'à la fin du morceau.
+Tous les stems d’un morceau démarrent ensemble et jouent continuellement. Les changements de conduite modifient les gains et les effets sans redémarrer les fichiers.
 
-| Personnage | Stem | Règle |
-|---|---|---|
-| KEYS | Piano | Toujours actif |
-| VOICE | Vocal | Toujours active |
-| PULSE | Drum | Progression avec la vitesse |
-| SPARK | Other | Accélération et virages |
-| BOUNCE | Bass | Vitesse, énergie et freinage |
+## Règle globale
 
-Les changements d'état de conduite ne redémarrent jamais les fichiers audio. Seuls les gains, le filtre et l'affichage changent.
+| Couche | Déclenchement |
+|---|---|
+| PULSE | progression régulière avec la vitesse |
+| BOUNCE | progression avec la vitesse + boost à l’accélération |
+| SWIRL | intensité et direction du virage ; reverb + delay spatial |
 
+SWIRL reçoit principalement SPARK, KEYS et VOICE. Un fichier `swirl` ou `turn_stem` peut être ajouté à un futur manifeste pour compléter l’effet commun.
 
-## Butterfly
+## Dubidubidu — Christell
 
-| Personnage | Stem | Règle |
-|---|---|---|
-| VOICE | Vocal | Toujours actif |
-| SPARK | Other / synthés | Toujours actif |
-| PULSE | Drum | Progression avec la vitesse |
-| BOUNCE | Bass | Accélération et virages |
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif + renfort à l’accélération |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-Aucun personnage KEYS n’est utilisé.
+## Butterfly — Marnik & Hard Lights
 
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## Blame It On Me
+## Blame It On Me — CADMIUM & Shiah Maisel
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- KEYS : absent.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
+
+## Modern Talking feat. Eric Singleton — Modern Talking feat. Eric Singleton
+
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
 ## On & On — Cartoon & Jéja
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : activé par l’accélération et les virages.
-- KEYS : absent.
-- Lecture continue : 207,256 s, fondu croisé de 0,75 s.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## That Don't Impress Me Much — Xelpy Remix
+## That Don't Impress Me Much — Shania Twain / Xelpy
 
-- VOICE : toujours active.
-- KEYS : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : activé par la vitesse, l’énergie et le freinage.
-- SPARK : activé par l’accélération et les virages.
-- Lecture continue : 183,380 s, fondu croisé de 0,75 s.
-
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif + renfort à l’accélération |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
 ## I Will Survive (Disco Remix) — Ziak
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : activé par l’accélération et les virages.
-- KEYS : absent.
-- Lecture continue : 169,587 s, fondu croisé de 0,75 s.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
+## Whispering Still — SRTW ft. Charity Children
 
-## Whispering Still (Little Rose Remix)
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- KEYS : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
+## First Thing — Artiste à préciser
 
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## Unsteady — Justin Caruso Remix
+## Unsteady — X Ambassadors / Justin Caruso
 
-- VOICE : toujours active.
-- KEYS : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- SPARK : accélération et virages.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif + renfort à l’accélération |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## Danza Kuduro Instrumental Remix
+## Danza Kuduro Instrumental Remix — Don Omar ft. Lucenzo
 
-- VOICE : toujours active.
-- SPARK : toujours actif, bande aiguë du stem Other.
-- KEYS : toujours actif, bande grave/médium du stem Other.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- Lecture continue : 128.575 s, fondu croisé de 0,75 s.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## Minuit Jacuzi — datA Remix
+## Minuit Jacuzi — Tepr
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- KEYS : absent.
-- Lecture continue : 264.124 s, fondu croisé de 0,75 s.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
-## Jerk It Out — Let’s Go! Remix
+## Jerk It Out — Miguelx2
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- KEYS : absent.
-- Lecture continue : 213.499 s, fondu croisé de 0,75 s.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
 
 ## I Will Wait For You — Tomas Skyldeberg
 
-- VOICE : toujours active.
-- SPARK : toujours actif.
-- KEYS : toujours actif.
-- PULSE : progression avec la vitesse.
-- BOUNCE : accélération et virages.
-- Lecture continue : 211,627 s, fondu croisé de 0,75 s.
-- BOUNCE utilise une couche grave FLAC dérivée de Drum + Other (35–180 Hz), car le fichier Bass.mp3 source était invalide.
+| Personnage | Règle |
+|---|---|
+| PULSE | Progression avec la vitesse |
+| SPARK | Toujours actif |
+| BOUNCE | Progression avec la vitesse + boost à l’accélération |
+| KEYS | Toujours actif |
+| VOICE | Toujours actif |
+| SWIRL | Activé par les virages |
+
