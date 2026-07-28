@@ -20,7 +20,7 @@
   "bus_behaviors": {
     "rhythm": "pulse_speed",
     "tops": "spark_always",
-    "bass": "bounce_accel_turn",
+    "bass": "bounce_speed_accel",
     "lead": "voice_always"
   },
   "characters": [
@@ -47,7 +47,7 @@
       "emoji": "🔊",
       "name": "BOUNCE",
       "role": "Bass",
-      "description": "Activé par l’accélération et les virages",
+      "description": "Progression avec la vitesse · boost à l’accélération",
       "color": "#25c5ff",
       "timing": "beat"
     },
@@ -104,9 +104,33 @@
       "speed"
     ],
     "BOUNCE": [
-      "acceleration",
-      "turn"
+      "speed",
+      "acceleration"
     ],
-    "KEYS": []
-  }
+    "KEYS": [],
+    "SWIRL": [
+      "turn"
+    ]
+  },
+  "turn_layer": {
+    "enabled": true,
+    "mode": "hybrid",
+    "effect": "stereo_delay_reverb",
+    "optional_stem_bus": "swirl",
+    "send_weights": {
+      "tops": 0.72,
+      "harmony": 0.54,
+      "piano": 0.5,
+      "lead": 0.34
+    },
+    "wet_gain": 0.46,
+    "stem_gain": 0.72,
+    "attack_seconds": 0.18,
+    "hold_seconds": 0.35,
+    "release_seconds": 1.55,
+    "trigger": [
+      "validated_turn"
+    ]
+  },
+  "sensor_profile": "fast_imu_gps_confirm_v9_7"
 }

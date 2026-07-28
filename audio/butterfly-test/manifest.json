@@ -1,13 +1,13 @@
 {
-  "title": "Whispering Still (Little Rose Remix)",
-  "artist": "SRTW ft. Charity Children",
+  "title": "Butterfly",
+  "artist": "Marnik & Hard Lights",
   "license": "Test local uniquement — droits réservés",
   "source_url": "",
-  "bpm": 120.18531977,
-  "bar_duration": 1.9969160997307382,
+  "bpm": 136.0,
+  "bar_duration": 1.7647058823529411,
   "playback_mode": "continuous",
-  "track_duration": 194.76898,
-  "loop_duration": 194.76898,
+  "track_duration": 170.109388,
+  "loop_duration": 170.109388,
   "crossfade_duration": 0.75,
   "format": "MP3 source direct, 128 kb/s, 44.1 kHz, stéréo — aucune recompression supplémentaire",
   "source_quality_note": "Stems probablement issus d’une séparation automatique ; résidus possibles entre les pistes.",
@@ -15,14 +15,12 @@
     "rhythm",
     "tops",
     "bass",
-    "harmony",
     "lead"
   ],
   "bus_behaviors": {
     "rhythm": "pulse_speed",
     "tops": "spark_always",
     "bass": "bounce_speed_accel",
-    "harmony": "keys_always",
     "lead": "voice_always"
   },
   "characters": [
@@ -54,15 +52,6 @@
       "timing": "beat"
     },
     {
-      "id": "harmony",
-      "emoji": "🎹",
-      "name": "KEYS",
-      "role": "Piano / harmonie",
-      "description": "Toujours actif par défaut",
-      "color": "#f06ec7",
-      "timing": "immediate"
-    },
-    {
       "id": "lead",
       "emoji": "🎙️",
       "name": "VOICE",
@@ -73,19 +62,17 @@
     }
   ],
   "bus_output_gain": {
-    "rhythm": 0.92,
-    "tops": 1.04,
-    "bass": 1.04,
-    "harmony": 0.98,
-    "lead": 1.02
+    "rhythm": 0.94,
+    "tops": 1.08,
+    "bass": 0.96,
+    "lead": 1.05
   },
   "continuous": {
     "files": {
-      "rhythm": "audio/whispering-still-little-rose-test/full/rhythm.mp3",
-      "tops": "audio/whispering-still-little-rose-test/full/tops.mp3",
-      "bass": "audio/whispering-still-little-rose-test/full/bass.mp3",
-      "harmony": "audio/whispering-still-little-rose-test/full/harmony.mp3",
-      "lead": "audio/whispering-still-little-rose-test/full/lead.mp3"
+      "rhythm": "audio/butterfly-test/full/rhythm.mp3",
+      "tops": "audio/butterfly-test/full/tops.mp3",
+      "bass": "audio/butterfly-test/full/bass.mp3",
+      "lead": "audio/butterfly-test/full/lead.mp3"
     }
   },
   "scenes": {
@@ -111,8 +98,7 @@
   "reaction_rules": {
     "default_active": [
       "VOICE",
-      "SPARK",
-      "KEYS"
+      "SPARK"
     ],
     "PULSE": [
       "speed"
@@ -121,6 +107,7 @@
       "speed",
       "acceleration"
     ],
+    "KEYS": [],
     "SWIRL": [
       "turn"
     ]

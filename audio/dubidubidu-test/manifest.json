@@ -20,8 +20,8 @@
   ],
   "bus_behaviors": {
     "rhythm": "pulse_speed",
-    "tops": "spark_accel_turn",
-    "bass": "bounce_speed_energy_brake",
+    "tops": "spark_always_accel",
+    "bass": "bounce_speed_accel",
     "harmony": "keys_always",
     "lead": "voice_always"
   },
@@ -40,16 +40,16 @@
       "emoji": "✨",
       "name": "SPARK",
       "role": "Other / synthés",
-      "description": "Activé uniquement par l’accélération et les virages",
+      "description": "Toujours actif · renforcé à l’accélération",
       "color": "#ffc13d",
-      "timing": "beat"
+      "timing": "immediate"
     },
     {
       "id": "bass",
       "emoji": "🔊",
       "name": "BOUNCE",
       "role": "Bass",
-      "description": "Activé par la vitesse, l’énergie et le freinage",
+      "description": "Progression avec la vitesse · boost à l’accélération",
       "color": "#25c5ff",
       "timing": "beat"
     },
@@ -111,19 +111,43 @@
   "reaction_rules": {
     "default_active": [
       "KEYS",
-      "VOICE"
+      "VOICE",
+      "SPARK"
     ],
     "PULSE": [
       "speed"
     ],
     "SPARK": [
-      "acceleration",
-      "turn"
+      "always",
+      "acceleration"
     ],
     "BOUNCE": [
       "speed",
-      "energy",
-      "braking"
+      "acceleration"
+    ],
+    "SWIRL": [
+      "turn"
     ]
-  }
+  },
+  "turn_layer": {
+    "enabled": true,
+    "mode": "hybrid",
+    "effect": "stereo_delay_reverb",
+    "optional_stem_bus": "swirl",
+    "send_weights": {
+      "tops": 0.72,
+      "harmony": 0.54,
+      "piano": 0.5,
+      "lead": 0.34
+    },
+    "wet_gain": 0.46,
+    "stem_gain": 0.72,
+    "attack_seconds": 0.18,
+    "hold_seconds": 0.35,
+    "release_seconds": 1.55,
+    "trigger": [
+      "validated_turn"
+    ]
+  },
+  "sensor_profile": "fast_imu_gps_confirm_v9_7"
 }
