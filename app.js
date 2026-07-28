@@ -8,7 +8,7 @@ const ui={
  section:$("sectionState"),mode:$("modeLabel"),bar:$("barLabel"),road:$("roadState"),roadHelp:$("roadModeHelp"),
  accel:$("accelMeter"),brake:$("brakeMeter"),turn:$("turnMeter"),music:$("musicMeter"),
  accelValue:$("accelValue"),brakeValue:$("brakeValue"),turnValue:$("turnValue"),musicValue:$("musicValue"),
- chord:$("chordState"),bass:$("bassState"),drum:$("drumState"),arp:$("arpState"),filter:$("filterState"),variation:$("variationState"),idle:$("idleState"),
+ chord:$("chordState"),bass:$("bassState"),drum:$("drumState"),arp:$("arpState"),filter:$("filterState"),variation:$("variationState"),idle:$("idleState"),swirl:$("swirlState"),
  agentGrid:$("agentGrid"),
  responsiveness:$("responsiveness"),accelSensitivity:$("accelSensitivity"),turnSensitivity:$("turnSensitivity"),
  responsivenessValue:$("responsivenessValue"),accelSensitivityValue:$("accelSensitivityValue"),turnSensitivityValue:$("turnSensitivityValue"),
@@ -95,6 +95,12 @@ const BUSES=[
  {id:"fx",emoji:"🌊",name:"FX",role:"Risers & impacts",description:"Accélération, freinage et changement de scène",color:"#a853f2",timing:"immediate"}
 ];
 
+const SWIRL_CHARACTER={
+ id:"swirl",emoji:"🌀",name:"SWIRL",role:"Effet spatial de virage",
+ description:"Reverb + delay spatial activés par les courbes",color:"#69e5ff",timing:"immediate",virtual:true
+};
+const DEFAULT_SWIRL_SEND_WEIGHTS={tops:.72,harmony:.54,piano:.50,lead:.34};
+
 const BUS_OUTPUT_GAIN={rhythm:1.12,tops:1.18,bass:1.12,harmony:1.10,piano:1.00,lead:1.16,fx:1.12};
 const FIXED_MIX={rhythm:.70,tops:.48,bass:.64,harmony:.56,piano:0,lead:.46,fx:.22};
 
@@ -114,6 +120,13 @@ let audioCtx=null;
 let masterGain=null;
 let masterFilter=null;
 let masterCompressor=null;
+let swirlInput=null;
+let swirlReturnGain=null;
+let swirlPanner=null;
+let swirlDelay=null;
+let swirlFeedback=null;
+let swirlStemGain=null;
+const swirlSendNodes=new Map();
 let schedulerTimer=null;
 let updateTimer=null;
 let watchId=null;
@@ -154,6 +167,10 @@ let calibration={phase:"idle",stationary:[],drive:[],driveWeights:[],timer:null}
 let shortMemory=0;
 let longMemory=0;
 let stableSpeedMemory=0;
+let swirlEnvelope=0;
+let swirlHoldUntil=0;
+let signedTurn=0;
+let gpsHeadingRateSigned=0;
 let previousSpeed=0;
 let lastMemoryUpdate=performance.now();
 let energy=0;
@@ -187,7 +204,9 @@ function setStatus(text){ui.status.innerHTML=`<i></i> ${text}`;}
 
 function currentCharacters(){
  if(!library?.tracks?.length||!manifest)return [];
- return manifest?.characters?.length?manifest.characters:BUSES;
+ const characters=manifest?.characters?.length?[...manifest.characters]:[...BUSES];
+ if(!characters.some(item=>item.id===SWIRL_CHARACTER.id))characters.push(SWIRL_CHARACTER);
+ return characters;
 }
 
 function currentBusSpec(busId){
@@ -238,7 +257,7 @@ function updateAgentVisual(id,level){
 async function loadLibrary(){
  if(library)return library;
  const response=await fetch(LIBRARY_URL,{cache:"no-cache"});
- if(!response.ok)throw new Error("Bibliothèque musicale V9.5 introuvable.");
+ if(!response.ok)throw new Error("Bibliothèque musicale V9.6.1 introuvable.");
  library=await response.json();
  library.tracks=Array.isArray(library.tracks)?library.tracks:[];
  localStorage.removeItem("drivepulse-auto-track");
@@ -316,6 +335,7 @@ async function activateTrackMetadata(trackId){
  localStorage.setItem("drivepulse-track-id",trackId);
  renderAgents();
  updateTrackUi();
+ updateSwirlSendProfile();
  return trackManifest;
 }
 
@@ -365,6 +385,41 @@ function updateTrackUi(){
 }
 
 
+function createSwirlImpulse(duration=2.35,decay=3.15){
+ const length=Math.max(1,Math.floor(audioCtx.sampleRate*duration));
+ const impulse=audioCtx.createBuffer(2,length,audioCtx.sampleRate);
+ for(let channel=0;channel<impulse.numberOfChannels;channel++){
+  const data=impulse.getChannelData(channel);
+  for(let index=0;index<length;index++){
+   const progress=index/length;
+   const fadeIn=Math.min(1,index/180);
+   data[index]=(Math.random()*2-1)*Math.pow(1-progress,decay)*fadeIn;
+  }
+ }
+ return impulse;
+}
+
+function currentSwirlConfig(){
+ const config=manifest?.turn_layer||{};
+ return {
+  enabled:config.enabled!==false,
+  wetGain:clamp(finite(config.wet_gain)||.46,0,.8),
+  stemGain:clamp(finite(config.stem_gain)||.72,0,1),
+  attack:clamp(finite(config.attack_seconds)||.24,.05,1.5),
+  hold:clamp(finite(config.hold_seconds)||.65,0,3),
+  release:clamp(finite(config.release_seconds)||2.4,.4,8),
+  sendWeights:{...DEFAULT_SWIRL_SEND_WEIGHTS,...(config.send_weights||{})}
+ };
+}
+
+function updateSwirlSendProfile(){
+ const weights=currentSwirlConfig().sendWeights;
+ swirlSendNodes.forEach((node,busId)=>{
+  if(!audioCtx)return;
+  node.gain.setTargetAtTime(clamp(finite(weights[busId]),0,1),audioCtx.currentTime,.04);
+ });
+}
+
 function createAudioGraph(){
  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
  if(!AudioContextClass)throw new Error("Web Audio API indisponible.");
@@ -385,6 +440,42 @@ function createAudioGraph(){
  masterCompressor.release.value=.14;
  masterGain.connect(masterFilter).connect(masterCompressor).connect(audioCtx.destination);
 
+ // SWIRL est un bus auxiliaire : le mix sec reste intact et seules les couches
+ // mélodiques sont envoyées dans la reverb/delay pendant les virages.
+ swirlInput=audioCtx.createGain();
+ const swirlHighPass=audioCtx.createBiquadFilter();
+ swirlHighPass.type="highpass";
+ swirlHighPass.frequency.value=300;
+ swirlHighPass.Q.value=.55;
+
+ swirlDelay=audioCtx.createDelay(1);
+ swirlDelay.delayTime.value=.175;
+ swirlFeedback=audioCtx.createGain();
+ swirlFeedback.gain.value=.22;
+ const delayReturn=audioCtx.createGain();
+ delayReturn.gain.value=.48;
+
+ const convolver=audioCtx.createConvolver();
+ convolver.buffer=createSwirlImpulse();
+ const reverbReturn=audioCtx.createGain();
+ reverbReturn.gain.value=.68;
+ const wetMix=audioCtx.createGain();
+ swirlPanner=audioCtx.createStereoPanner?audioCtx.createStereoPanner():audioCtx.createGain();
+ swirlReturnGain=audioCtx.createGain();
+ swirlReturnGain.gain.value=0;
+ swirlStemGain=audioCtx.createGain();
+ swirlStemGain.gain.value=0;
+
+ swirlInput.connect(swirlHighPass);
+ swirlHighPass.connect(swirlDelay);
+ swirlDelay.connect(swirlFeedback).connect(swirlDelay);
+ swirlDelay.connect(delayReturn).connect(wetMix);
+ swirlHighPass.connect(convolver).connect(reverbReturn).connect(wetMix);
+ wetMix.connect(swirlPanner).connect(swirlReturnGain).connect(masterGain);
+ // Un futur stem spécial de virage est audible directement et alimente aussi l’espace SWIRL.
+ swirlStemGain.connect(masterGain);
+ swirlStemGain.connect(swirlInput);
+
  BUSES.forEach(bus=>{
   const gain=audioCtx.createGain();
   gain.gain.value=0;
@@ -392,7 +483,14 @@ function createAudioGraph(){
   busNodes.set(bus.id,gain);
   busRequestedLevels.set(bus.id,0);
   lastVisualLevels.set(bus.id,0);
+  if(Object.hasOwn(DEFAULT_SWIRL_SEND_WEIGHTS,bus.id)){
+   const send=audioCtx.createGain();
+   send.gain.value=DEFAULT_SWIRL_SEND_WEIGHTS[bus.id];
+   gain.connect(send).connect(swirlInput);
+   swirlSendNodes.set(bus.id,send);
+  }
  });
+ updateSwirlSendProfile();
 }
 
 async function decodeAudio(url){
@@ -440,6 +538,11 @@ async function loadScene(name,trackId=currentTrackId){
    const buffer=await decodeAudio(url);
    data.set(bus.id,{buffer,rmsDb:estimateBufferDb(buffer),url});
   }));
+  const swirlUrl=files?.swirl||files?.turn_stem||trackManifest?.turn_layer?.stem_file;
+  if(swirlUrl){
+   const buffer=await decodeAudio(swirlUrl);
+   data.set("__swirl",{buffer,rmsDb:estimateBufferDb(buffer),url:swirlUrl});
+  }
   sceneCache.set(key,data);
   sceneAccess.set(key,performance.now());
   sceneLoads.delete(key);
@@ -511,6 +614,22 @@ function startSceneGroup(scene,when,offset=0,fadeIn=.055,trackId=currentTrackId)
   group.sources.push(source);
   group.sourceGains.push(sourceGain);
  });
+ const swirlEntry=data.get("__swirl");
+ if(swirlEntry&&swirlStemGain){
+  const source=audioCtx.createBufferSource();
+  const sourceGain=audioCtx.createGain();
+  source.buffer=swirlEntry.buffer;
+  if(fadeIn>0){
+   sourceGain.gain.setValueAtTime(0,when);
+   sourceGain.gain.linearRampToValueAtTime(1,when+fadeIn);
+  }else sourceGain.gain.setValueAtTime(1,when);
+  source.connect(sourceGain).connect(swirlStemGain);
+  const available=Math.max(.03,Math.min(duration,swirlEntry.buffer.duration-offset));
+  source.start(when,offset,available);
+  source.stop(when+available+.04);
+  group.sources.push(source);
+  group.sourceGains.push(sourceGain);
+ }
  activeGroups.add(group);
  const cleanupDelay=Math.max(0,(group.end-audioCtx.currentTime+.2)*1000);
  setTimeout(()=>activeGroups.delete(group),cleanupDelay);
@@ -592,6 +711,7 @@ function commitTrackChange(item){
  applyTrackTiming(manifest);
  localStorage.setItem("drivepulse-track-id",currentTrackId);
  renderAgents();
+ updateSwirlSendProfile();
 
  currentScene="intro";
  targetScene="intro";
@@ -801,11 +921,23 @@ function busBehaviorLevel(behavior){
   case "pulse_speed":
    // PULSE suit uniquement la vitesse relative au mode routier.
    return clamp(smoothstep(.06,.92,speedIntensity)*.84,0,.84);
+  case "spark_accel":
+   // SPARK événementiel : utilisé par les morceaux où il ne doit apparaître qu'à l'accélération.
+   return clamp(smoothstep(.05,.58,accel)*.74,0,.74);
+  case "spark_always_accel":
+   // SPARK reste audible en permanence et reçoit un renfort progressif à l'accélération.
+   return clamp(.58+smoothstep(.05,.58,accel)*.24,.58,.82);
   case "spark_accel_turn":
-   // SPARK apparaît uniquement avec une accélération ou un virage.
+   // Compatibilité avec les anciens manifestes.
    return clamp(Math.max(smoothstep(.05,.55,accel)*.74,smoothstep(.05,.55,turn)*.74),0,.74);
+  case "bounce_speed_accel":{
+   // BOUNCE construit le poids du morceau avec la vitesse ; l’accélération ajoute un boost court.
+   const base=smoothstep(.12,.94,speedIntensity)*.76;
+   const boost=smoothstep(.05,.62,accel)*.24;
+   return clamp(base+boost,0,.92);
+  }
   case "bounce_speed_energy_brake":
-   // BOUNCE est réveillé par la vitesse, l'énergie globale ou le freinage.
+   // Compatibilité avec les anciens manifestes.
    return clamp(Math.max(
     smoothstep(.08,.72,speedIntensity)*.76,
     smoothstep(.12,.72,e)*.78,
@@ -859,6 +991,29 @@ function scheduleBusLevel(bus,level,force=false){
  }
 }
 
+function applySwirlMix(force=false){
+ if(!audioCtx||!swirlReturnGain)return;
+ const config=currentSwirlConfig();
+ const now=audioCtx.currentTime;
+ const level=config.enabled?swirlEnvelope:0;
+ const wet=clamp(level*config.wetGain,0,.72);
+ swirlReturnGain.gain.cancelScheduledValues(now);
+ swirlReturnGain.gain.setTargetAtTime(wet,now,force?.018:.055);
+ if(swirlStemGain){
+  swirlStemGain.gain.cancelScheduledValues(now);
+  swirlStemGain.gain.setTargetAtTime(level*config.stemGain,now,force?.018:.050);
+ }
+ if(swirlPanner?.pan){
+  const pan=clamp(signedTurn*.46,-.46,.46);
+  swirlPanner.pan.setTargetAtTime(pan,now,.08);
+ }
+ if(swirlDelay){
+  const delay=.145+level*.075;
+  swirlDelay.delayTime.setTargetAtTime(delay,now,.09);
+ }
+ updateAgentVisual("swirl",level);
+}
+
 function applyBusMix(force=false){
  if(!audioCtx)return;
  const desired=desiredBusLevels();
@@ -881,6 +1036,7 @@ function applyBusMix(force=false){
  const cutoff=fixedMixMode?19000:brake>.04?900+(1-brake)*6800:10500+energy*8500+smoothed.accel*1800;
  masterFilter.frequency.setTargetAtTime(clamp(cutoff,650,19500),now,.045);
  masterGain.gain.setTargetAtTime(fixedMixMode?.90:brake>.58?.72:.92,now,.055);
+ applySwirlMix(force);
 }
 
 
@@ -992,6 +1148,7 @@ function updateDesktopSimulation(){
  smoothed.accel=lowPass(smoothed.accel,acceleration,.42);
  smoothed.brake=lowPass(smoothed.brake,braking,.42);
  smoothed.turn=lowPass(smoothed.turn,Math.abs(steering),.40);
+ signedTurn=lowPass(signedTurn,steering,.36);
  desktopState.turn=finite(ui.simTurn.value);
  updateDesktopControlLabels();
 }
@@ -1009,6 +1166,14 @@ function updateDrivingMemory(){
  const speedDelta=Math.abs(speedKmh-previousSpeed);
  const stable=speedKmh>8&&speedDelta<2.4&&smoothed.accel<.18&&smoothed.brake<.18?1:0;
  stableSpeedMemory=lowPass(stableSpeedMemory,stable,Math.min(.25,dt*.15));
+ const swirlConfig=currentSwirlConfig();
+ const turnTarget=clamp(smoothstep(.07,.58,smoothed.turn)*(.58+.42*smoothstep(.04,.92,speedIntensity)));
+ if(turnTarget>swirlEnvelope+.015)swirlHoldUntil=now+swirlConfig.hold*1000;
+ const heldTarget=now<swirlHoldUntil?Math.max(turnTarget,swirlEnvelope*.985):turnTarget;
+ const tau=heldTarget>swirlEnvelope?swirlConfig.attack:swirlConfig.release;
+ const swirlAmount=1-Math.exp(-dt/Math.max(.01,tau));
+ swirlEnvelope=lowPass(swirlEnvelope,heldTarget,swirlAmount);
+ if(smoothed.turn<.025&&now>=swirlHoldUntil)signedTurn=lowPass(signedTurn,0,Math.min(.22,dt*.8));
  previousSpeed=speedKmh;
  energy=clamp(speedIntensity*.40+shortMemory*.16+longMemory*.08+smoothed.accel*.22+smoothed.turn*.10-smoothed.brake*.15);
 }
@@ -1088,6 +1253,7 @@ function updateUi(){
  ui.variation.textContent=SCENE_LABELS[targetScene];
  const defaultActive=manifest?.reaction_rules?.default_active||[];
  ui.idle.textContent=defaultActive.length?`${defaultActive.join(" + ")} actifs`:"Fond adaptatif";
+ if(ui.swirl)ui.swirl.textContent=swirlEnvelope>.68?"Large":swirlEnvelope>.12?"Ouvert":"Sec";
 
  ui.motionX.textContent=rawMotion.x.toFixed(2);ui.motionY.textContent=rawMotion.y.toFixed(2);ui.motionZ.textContent=rawMotion.z.toFixed(2);
  ui.imuLong.textContent=imuLongitudinal.toFixed(2);ui.imuLat.textContent=imuLateral.toFixed(2);
@@ -1106,7 +1272,7 @@ function maybeLogSensors(){
   speed_kmh:speedKmh.toFixed(2),gps_accel_ms2:gpsAcceleration.toFixed(3),gps_heading_rate_dps:gpsHeadingRate.toFixed(3),
   motion_x:rawMotion.x.toFixed(4),motion_y:rawMotion.y.toFixed(4),motion_z:rawMotion.z.toFixed(4),
   imu_longitudinal:imuLongitudinal.toFixed(4),imu_lateral:imuLateral.toFixed(4),yaw_rate_dps:verticalYawRate.toFixed(3),
-  accel_signal:smoothed.accel.toFixed(4),brake_signal:smoothed.brake.toFixed(4),turn_signal:smoothed.turn.toFixed(4),turn_signed:(desktopSimActive?desktopState.turn:Math.sign(imuLateral)*smoothed.turn).toFixed(4),pedals_linked:desktopSimActive&&ui.simLinkPedals.checked?1:0,
+  accel_signal:smoothed.accel.toFixed(4),brake_signal:smoothed.brake.toFixed(4),turn_signal:smoothed.turn.toFixed(4),turn_signed:signedTurn.toFixed(4),swirl_level:swirlEnvelope.toFixed(4),pedals_linked:desktopSimActive&&ui.simLinkPedals.checked?1:0,
   energy:energy.toFixed(4),speed_ratio:speedRatio.toFixed(4),
   rhythm_level:(busRequestedLevels.get("rhythm")||0).toFixed(4),tops_level:(busRequestedLevels.get("tops")||0).toFixed(4),
   bass_level:(busRequestedLevels.get("bass")||0).toFixed(4),harmony_level:(busRequestedLevels.get("harmony")||0).toFixed(4),
@@ -1188,7 +1354,8 @@ function handleMotion(event){
  imuLateral=dot(linearMotion,sensorCalibration.lateral);
  const rotation=event.rotationRate||{};
  const angular=vec(finite(rotation.beta),finite(rotation.gamma),finite(rotation.alpha));
- verticalYawRate=Math.abs(dot(angular,sensorCalibration.gravity));
+ const verticalYawSigned=dot(angular,sensorCalibration.gravity);
+ verticalYawRate=Math.abs(verticalYawSigned);
 
  if(gpsAcceleration>.25&&Math.abs(imuLongitudinal)>.05&&sensorCalibration.calibrated){
   automaticSignScore=lowPass(automaticSignScore,Math.sign(gpsAcceleration*imuLongitudinal),.035);
@@ -1217,6 +1384,8 @@ function handleMotion(event){
  smoothed.accel=lowPass(smoothed.accel,accelerationTarget,.24);
  smoothed.brake=lowPass(smoothed.brake,brakeTarget,.24);
  smoothed.turn=lowPass(smoothed.turn,turnTarget,.23);
+ const directionSource=Math.abs(imuLateral)>.10?Math.sign(imuLateral):(Math.abs(verticalYawSigned)>2?Math.sign(verticalYawSigned):Math.sign(gpsHeadingRateSigned));
+ signedTurn=lowPass(signedTurn,directionSource*turnTarget,.22);
 }
 
 function beginCalibration(){
@@ -1295,9 +1464,13 @@ function startGps(){
   const heading=coords.heading;
   if(lastGps.timestamp&&lastGps.heading!=null&&heading!=null&&Number.isFinite(heading)&&speed>2){
    const dt=Math.max(.2,Math.min(5,(timestamp-lastGps.timestamp)/1000));
-   const rate=Math.abs(wrapDegrees(heading-lastGps.heading))/dt;
-   gpsHeadingRate=lowPass(gpsHeadingRate,clamp(rate,0,120),.30);
-  }else gpsHeadingRate=lowPass(gpsHeadingRate,0,.08);
+   const signedRate=wrapDegrees(heading-lastGps.heading)/dt;
+   gpsHeadingRateSigned=lowPass(gpsHeadingRateSigned,clamp(signedRate,-120,120),.30);
+   gpsHeadingRate=lowPass(gpsHeadingRate,Math.abs(gpsHeadingRateSigned),.30);
+  }else{
+   gpsHeadingRateSigned=lowPass(gpsHeadingRateSigned,0,.08);
+   gpsHeadingRate=lowPass(gpsHeadingRate,0,.08);
+  }
   lastGps={timestamp,speed,heading:heading!=null&&Number.isFinite(heading)?heading:lastGps.heading};
  },()=>setStatus("GPS indisponible : les capteurs Motion restent actifs."),{enableHighAccuracy:true,maximumAge:250,timeout:10000});
 }
@@ -1309,7 +1482,7 @@ function startDemo(){
  let phase=0;if(ui.demo)ui.demo.textContent="Arrêter la simulation";setStatus("Simulation low latency active.");
  demoTimer=setInterval(()=>{
   phase+=.075;speedKmh=Math.max(0,50+48*Math.sin(phase*.22));
-  smoothed.accel=clamp((Math.sin(phase)+.15)*.72);smoothed.brake=clamp((-Math.sin(phase*.51)-.34)*.86);smoothed.turn=clamp(Math.abs(Math.sin(phase*.37))*.92);
+  smoothed.accel=clamp((Math.sin(phase)+.15)*.72);smoothed.brake=clamp((-Math.sin(phase*.51)-.34)*.86);smoothed.turn=clamp(Math.abs(Math.sin(phase*.37))*.92);signedTurn=Math.sin(phase*.37)*smoothed.turn;
  },100);
 }
 
@@ -1330,7 +1503,7 @@ function startJourney(){
   else if(elapsed<138){targetSpeed=130-(elapsed-126)/12*125;brake=.76;}
   else{targetSpeed=0;clearInterval(journeyTimer);journeyTimer=null;if(ui.journey)ui.journey.textContent="Scénario trajet complet";setStatus("Scénario terminé.");}
   applyRoadMode(roadMode);speedKmh=Math.max(0,targetSpeed);
-  smoothed.accel=lowPass(smoothed.accel,acceleration,.25);smoothed.brake=lowPass(smoothed.brake,brake,.25);smoothed.turn=lowPass(smoothed.turn,turn,.25);
+  smoothed.accel=lowPass(smoothed.accel,acceleration,.25);smoothed.brake=lowPass(smoothed.brake,brake,.25);smoothed.turn=lowPass(smoothed.turn,turn,.25);signedTurn=lowPass(signedTurn,turn,.22);
  },100);
 }
 
@@ -1357,7 +1530,7 @@ function downloadSensorLog(){
  const blob=new Blob(["\ufeff"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
  const url=URL.createObjectURL(blob);
  const link=document.createElement("a");
- link.href=url;link.download=`drivepulse-v9-5-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
+ link.href=url;link.download=`drivepulse-v9-6-1-desktop-sensors-${new Date().toISOString().replaceAll(":","-")}.csv`;
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
@@ -1392,9 +1565,9 @@ async function start(){
 
   ui.start.disabled=true;ui.calibrate.disabled=desktopSimActive||!motionGranted;ui.stop.disabled=false;if(ui.demo)ui.demo.disabled=false;if(ui.journey)ui.journey.disabled=false;
   if(ui.quality)ui.quality.disabled=false;ui.record.disabled=false;ui.downloadLog.disabled=sensorLog.length===0;
-  setStatus(desktopSimActive?"V9.5 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.5 active : lecture continue et calibration 3D prêtes.":"V9.5 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
+  setStatus(desktopSimActive?"V9.6.1 actif : simulateur PC prêt, utilise les curseurs ou le clavier.":(motionGranted?(sensorCalibration.calibrated?"V9.6.1 active : lecture continue et calibration 3D prêtes.":"V9.6.1 active : effectue la calibration 3D."):"Audio actif. Capteurs Motion indisponibles."));
   applyBusMix(true);updateEngine();
- }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.5.");stop(false);}
+ }catch(error){console.error(error);setStatus(error.message||"Impossible de démarrer DrivePulse V9.6.1.");stop(false);}
 }
 
 function stop(updateStatus=true){
@@ -1407,9 +1580,11 @@ function stop(updateStatus=true){
  window.removeEventListener("devicemotion",handleMotion);
  activeGroups.forEach(group=>cancelFutureGroup(group));activeGroups.clear();
  if(audioCtx)audioCtx.close().catch(()=>{});
- audioCtx=masterGain=masterFilter=masterCompressor=null;
- busNodes.clear();sceneCache.clear();sceneLoads.clear();sceneAccess.clear();activeGroup=pendingTransition=nextLoopGroup=pendingTrackSwitch=null;clearPreparedEndTrack();
+ audioCtx=masterGain=masterFilter=masterCompressor=swirlInput=swirlReturnGain=swirlPanner=swirlDelay=swirlFeedback=swirlStemGain=null;
+ swirlSendNodes.clear();busNodes.clear();sceneCache.clear();sceneLoads.clear();sceneAccess.clear();activeGroup=pendingTransition=nextLoopGroup=pendingTrackSwitch=null;clearPreparedEndTrack();
+ swirlEnvelope=0;swirlHoldUntil=0;signedTurn=0;
  BUSES.forEach(bus=>setAgentVisualState(bus.id,"inactive"));
+ setAgentVisualState("swirl","inactive");
  if(sensorLogging){sensorLogging=false;ui.record.textContent="Enregistrer capteurs";}
  ui.start.disabled=!library?.tracks?.length;ui.calibrate.disabled=true;ui.stop.disabled=true;ui.record.disabled=true;
  if(ui.demo){ui.demo.disabled=true;ui.demo.textContent="Simulation libre";}
@@ -1428,7 +1603,7 @@ function applyRoadMode(mode){
 const HELP_CONTENT={
  responsiveness:{title:"Réactivité musicale",text:"Les volumes réagissent désormais immédiatement, au prochain temps ou à la prochaine mesure. Ce réglage agit surtout sur la durée de validation avant un changement de scène.",recommendation:"Conseil : 1,0. Monte vers 1,3 si les scènes changent encore trop lentement."},
  accelSensitivity:{title:"Sensibilité accélération",text:"Amplifie la fusion entre l’accélération 3D du téléphone et la variation de vitesse GPS.",recommendation:"Conseil : commence à 1,0 après la calibration 3D."},
- turnSensitivity:{title:"Sensibilité virage",text:"Combine l’accélération latérale, la rotation autour de la verticale et le changement de cap GPS.",recommendation:"Conseil : 1,0 ; baisse si les bosses déclenchent trop de percussions."}
+ turnSensitivity:{title:"Sensibilité virage",text:"Combine l’accélération latérale, la rotation verticale et le changement de cap GPS pour piloter SWIRL, le bus de reverb et delay spatial.",recommendation:"Conseil : 1,0 ; baisse si SWIRL s’ouvre sur les bosses ou les petites corrections de volant."}
 };
 function openHelp(key){const item=HELP_CONTENT[key];if(!item)return;ui.helpTitle.textContent=item.title;ui.helpText.textContent=item.text;ui.helpRecommendation.textContent=item.recommendation;ui.helpModal.hidden=false;}
 function closeHelp(){ui.helpModal.hidden=true;}
@@ -1439,7 +1614,7 @@ loadLibrary()
  .then(async()=>{
   if(library.tracks.length){
    await activateTrackMetadata(currentTrackId);
-   setStatus("Prêt — V9.5 : simulateur ordinateur activé par défaut.");
+   setStatus("Prêt — V9.6.1 : simulateur ordinateur activé par défaut.");
   }else{
    renderAgents();
    setStatus("Bibliothèque vide — les anciens morceaux ont été retirés. En attente de nouveaux stems.");
@@ -1483,4 +1658,4 @@ document.addEventListener("keyup",event=>{
  event.preventDefault();
 });
 [ui.responsiveness,ui.accelSensitivity,ui.turnSensitivity].forEach(input=>input.addEventListener("input",updateSettingValues));
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.5"));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v=9.6"));

@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#060a12">
-<title>DrivePulse V9.5</title>
+<title>DrivePulse V9.6.1</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css?v=9.5">
+<link rel="stylesheet" href="style.css?v=9.6">
 </head>
 <body>
 <main class="app-shell">
 
 <header class="topbar">
   <div class="brand-block">
-    <p class="eyebrow">Toyota C-HR · Prototype V9.5</p>
+    <p class="eyebrow">Toyota C-HR · Prototype V9.6.1</p>
     <h1>Drive<span>Pulse</span></h1>
     <p id="status" class="status"><i></i> Prêt</p>
   </div>
@@ -92,7 +92,7 @@
         <output id="simAccelValue">0%</output>
       </div>
       <input id="simAccel" type="range" min="0" max="1" step="0.01" value="0">
-      <small>Active notamment SPARK et augmente l’énergie.</small>
+      <small>Renforce BOUNCE et les SPARK configurés pour l’accélération.</small>
     </div>
 
     <div class="sim-control brake-control">
@@ -101,7 +101,7 @@
         <output id="simBrakeValue">0%</output>
       </div>
       <input id="simBrake" type="range" min="0" max="1" step="0.01" value="0">
-      <small>Renforce BOUNCE selon la règle du morceau.</small>
+      <small>Réduit la vitesse et resserre temporairement le filtre musical.</small>
     </div>
 
     <div class="sim-control turn-control">
@@ -111,7 +111,7 @@
       </div>
       <input id="simTurn" type="range" min="-1" max="1" step="0.01" value="0">
       <div class="turn-scale"><span>Gauche</span><span>Centre</span><span>Droite</span></div>
-      <small>La direction est conservée ; l’intensité pilote SPARK.</small>
+      <small>La direction et l’intensité pilotent SWIRL : reverb et delay spatial.</small>
     </div>
   </div>
 
@@ -228,7 +228,7 @@
           <input id="turnSensitivity" type="range" min="0.6" max="1.8" step="0.05" value="1">
           <output id="turnSensitivityValue">1.00</output>
         </div>
-        <small>Influence des courbes sur les mélodies et percussions.</small>
+        <small>Influence des courbes sur l’ouverture de SWIRL.</small>
       </div>
     </section>
 
@@ -296,6 +296,7 @@
       <div><span>Filtre</span><strong id="filterState">Ouvert</strong></div>
       <div><span>Séquence cible</span><strong id="variationState">Intro</strong></div>
       <div><span>Fond permanent</span><strong id="idleState">KEYS + VOICE</strong></div>
+      <div><span>Effet virage</span><strong id="swirlState">Sec</strong></div>
     </div>
   </section>
 </div>
@@ -304,7 +305,7 @@
 <section class="glass-panel diagnostic-panel">
   <div class="panel-heading compact">
     <div>
-      <p class="section-kicker">Diagnostic V9.5 · lecture continue</p>
+      <p class="section-kicker">Diagnostic V9.6.1 · lecture continue</p>
       <h2>Fusion Motion + GPS</h2>
       <p>Ces valeurs permettent de vérifier l’orientation du téléphone et d’exporter un journal du trajet.</p>
     </div>
@@ -341,6 +342,6 @@
   </div>
 </div>
 
-<script src="app.js?v=9.5"></script>
+<script src="app.js?v=9.6.1"></script>
 </body>
 </html>

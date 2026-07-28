@@ -1,9 +1,9 @@
-const CACHE="drivepulse-working-library-19";
+const CACHE="drivepulse-working-library-21";
 const CORE=[
  "./",
  "./index.html",
- "./style.css?v=9.5",
- "./app.js?v=9.5",
+ "./style.css?v=9.6",
+ "./app.js?v=9.6.1",
  "./manifest.webmanifest",
  "./audio/library.json",
  "./audio/README.md"
