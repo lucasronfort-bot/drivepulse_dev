@@ -1,17 +1,9 @@
-# Audio V9.5
+# Audio DrivePulse V9.8
 
-Le dossier `dubidubidu-test/full` contient les cinq stems complets de test. Ils sont lus simultanément du début à la fin, sans découpage en scènes.
+Ce dossier contient les manifests et stems synchronisés des 14 morceaux de test.
 
-- `blame-it-on-me-test` : quatre stems MP3 synchronisés, lecture continue.
+Chaque manifeste définit les comportements de VOICE, SPARK, KEYS, PULSE et BOUNCE ainsi qu’une section `turn_layer` pour SWIRL. Les fichiers jouent en continu ; le moteur adapte les gains et les effets sans déplacer la position de lecture.
 
-- `unsteady-justin-caruso-test` : X Ambassadors — Justin Caruso Remix, test local.
+SWIRL fonctionne sans fichier audio supplémentaire grâce au bus Web Audio partagé. Un stem spécial peut toutefois être ajouté avec la clé `swirl`, `turn_stem` ou `turn_layer.stem_file`.
 
-- `minuit-jacuzi-data-remix-test` : Tepr — Minuit Jacuzi (datA Remix), quatre stems MP3 synchronisés, sans KEYS.
-
-## jerk-it-out-lets-go-miguelx2-test
-
-Quatre stems MP3 synchronisés en lecture continue : VOICE et SPARK permanents, PULSE selon la vitesse, BOUNCE selon l’accélération et les virages, sans KEYS.
-
-## i-will-wait-for-you-test
-
-Cinq bus synchronisés en lecture continue : VOICE, SPARK et KEYS permanents, PULSE selon la vitesse, BOUNCE selon l’accélération et les virages. Le bus BOUNCE est une couche grave FLAC dérivée, car le fichier Bass.mp3 fourni n’était pas un flux audio valide.
+THRUST fonctionne également sans fichier supplémentaire. Il réutilise brièvement les couches BOUNCE et mélodiques du morceau lors du départ d’une accélération.

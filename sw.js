@@ -1,9 +1,9 @@
-const CACHE="drivepulse-library-v9-7-fast-sensors";
+const CACHE="drivepulse-library-v9-8-thrust";
 const CORE=[
  "./",
  "./index.html",
- "./style.css?v=9.7",
- "./app.js?v=9.7",
+ "./style.css?v=9.8",
+ "./app.js?v=9.8",
  "./manifest.webmanifest",
  "./audio/library.json",
  "./audio/README.md"

@@ -1,4 +1,4 @@
-# Bibliothèque musicale — DrivePulse V9.7
+# Bibliothèque musicale — DrivePulse V9.8
 
 La bibliothèque contient **14 morceaux** en lecture continue.
 
@@ -7,7 +7,8 @@ Le morceau suivant démarre à la fin du titre courant avec un fondu croisé. Le
 ## Architecture adaptative commune
 
 - **PULSE** progresse avec la vitesse.
-- **BOUNCE** progresse avec la vitesse et reçoit un renfort lors des accélérations.
+- **BOUNCE** progresse avec la vitesse, conserve une marge dynamique et reçoit un renfort lors des accélérations.
+- **THRUST** produit un impact bref au départ d’une accélération.
 - **SWIRL** ouvre une reverb et un delay spatial selon l’intensité et la direction des virages.
 - **SPARK, KEYS et VOICE** conservent les règles propres à chaque morceau et alimentent le bus SWIRL.
 

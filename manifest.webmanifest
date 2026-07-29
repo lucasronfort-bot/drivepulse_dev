@@ -1,9 +1,9 @@
 {
-  "name": "DrivePulse V9.7",
-  "short_name": "DrivePulse 9.7",
+  "name": "DrivePulse V9.8",
+  "short_name": "DrivePulse 9.8",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#050912",
   "theme_color": "#050912",
-  "description": "DrivePulse avec bibliothèque de 14 morceaux, PULSE/BOUNCE liés à la vitesse et effet SWIRL dans les virages."
+  "description": "DrivePulse avec THRUST au départ des accélérations, PULSE/BOUNCE liés à la vitesse et SWIRL dans les virages."
 }

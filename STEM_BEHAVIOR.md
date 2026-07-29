@@ -1,4 +1,4 @@
-# Comportement des stems — DrivePulse V9.7
+# Comportement des stems — DrivePulse V9.8
 
 Tous les stems d’un morceau démarrent ensemble et jouent continuellement. Les changements de conduite modifient les gains et les effets sans redémarrer les fichiers.
 
@@ -8,7 +8,10 @@ Tous les stems d’un morceau démarrent ensemble et jouent continuellement. Les
 |---|---|
 | PULSE | progression régulière avec la vitesse |
 | BOUNCE | progression avec la vitesse + boost à l’accélération |
+| THRUST | impulsion courte au départ d’une accélération |
 | SWIRL | intensité et direction du virage ; reverb + delay spatial |
+
+THRUST renforce brièvement BOUNCE et les couches mélodiques sans stem supplémentaire.
 
 SWIRL reçoit principalement SPARK, KEYS et VOICE. Un fichier `swirl` ou `turn_stem` peut être ajouté à un futur manifeste pour compléter l’effet commun.
 

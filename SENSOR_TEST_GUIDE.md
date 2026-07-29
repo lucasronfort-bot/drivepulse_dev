@@ -1,4 +1,4 @@
-# Guide de test capteurs — DrivePulse V9.7
+# Guide de test capteurs — DrivePulse V9.8
 
 ## Calibration
 
@@ -7,14 +7,24 @@
 3. Effectuer la calibration 3D : immobile, puis accélération douce en ligne droite.
 4. Ne plus déplacer le téléphone pendant le trajet.
 
-## Test accélération
+## Test THRUST
 
-Effectuer plusieurs accélérations progressives puis franches. La jauge Accélération et le renfort de BOUNCE doivent commencer à réagir presque immédiatement, avant la mise à jour GPS.
+Effectuer plusieurs départs d’accélération francs, puis des accélérations progressives. THRUST doit réagir au début de l’appui, avant que la vitesse GPS n’ait réellement augmenté.
 
-## Test SWIRL
+Le personnage THRUST doit s’activer brièvement. BOUNCE doit ensuite rester renforcé pendant la durée de l’accélération.
 
-Comparer une ligne droite bosselée, de petites corrections de volant et de vrais virages. SWIRL doit rester sec sur les bosses et s’ouvrir surtout lorsque le gyroscope ou le cap GPS confirme une rotation.
+## Test BOUNCE
 
-## Journal CSV V9.7
+À vitesse stable, BOUNCE doit rester présent sans être saturé. Une accélération doit disposer d’une marge clairement audible jusqu’au niveau maximal.
 
-Les colonnes `imu_accel_fast`, `gps_accel_slow`, `accel_target` et `accel_signal` permettent de mesurer la chaîne d’accélération. Les colonnes `turn_imu_evidence`, `turn_gyro_evidence`, `turn_gps_evidence` et `turn_confidence` permettent d’identifier la source d’un déclenchement SWIRL.
+## Test freinage
+
+Le freinage n’a pas été modifié en V9.8. Noter les moments où l’interface indique un freinage alors que la voiture ne ralentit pas afin de comparer avec le CSV.
+
+## Journal CSV V9.8
+
+- `thrust_jerk` : montée rapide normalisée de l’accélération ;
+- `thrust_trigger` : intensité de l’impulsion déclenchée ;
+- `thrust_level` : enveloppe sonore réellement appliquée ;
+- `imu_accel_fast`, `gps_accel_slow`, `accel_target`, `accel_signal` : chaîne d’accélération ;
+- `brake_signal` : freinage actuel à diagnostiquer.
